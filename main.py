@@ -8,7 +8,7 @@ class Person:
         self.__name: str = person_name
         self.__birthday: Date = person_birthday
         self.__gender: Gender = person_gender
-        self.__phone: Phone = person_phone
+        self.__phone: str = person_phone
 
     def get_name(self): return self.__name
 
@@ -40,34 +40,28 @@ class User(Person):
                 person.get_phone()
             )
             self.__email = email
-        else:
-
-            if len(args) == 5:
-                person_name, person_birthday, person_gender, person_phone, email = args
-            else:
-
-                person_name = kwargs.get('person_name')
-                person_birthday = kwargs.get('person_birthday')
-                person_gender = kwargs.get('person_gender')
-                person_phone = kwargs.get('person_phone')
-                email = kwargs.get('email')
-
+        elif len(args) == 5:
+            person_name, person_birthday, person_gender, person_phone, email = args
             super().__init__(person_name, person_birthday, person_gender, person_phone)
             self.__email = email
 
         self.__id = uuid.uuid4()
         self.__tickets = []
 
+    def get_email(self):
+        return self.__email
 
-    def get_email(self): return self.__email
+    def get_id(self):
+        return self.__id
 
-    def get_id(self): return self.__id
+    def get_tickets(self):
+        return self.__tickets
 
-    def get_tickets(self): return self.__tickets
+    def set_email(self, email):
+        self.__email = email
 
-    def set_email(self, email): self.__email = email
-
-    def add_ticket(self): pass
+    def add_ticket(self):
+        pass
 
 
 @unique
@@ -93,18 +87,41 @@ class Gender(Enum):
 
 
 class Date:
-    def __init__(self, day=1, month=Months.JANUARY, year=2025):
-        self.day = day  # int
-        self.month = month  # Months
-        self.year = year  # int
+    def __init__(self, minutes, hours ,day=1, month=Months.JANUARY, year=2025):
+        self.minutes: int = minutes
+        self.hours: int = hours
+        self.day: int = day
+        self.month: Months = month
+        self.year: int = year
 
 
-class Phone:
-    def __init__(self, number="+89150000001"):
-        self.number = number
+
+class Ticket:
+    def __init__(self, passenger, trip):
+        self.passenger: User = passenger
+        self.trip = trip
+        self.__ticket_id = uuid.uuid4()
+
+
+class Trip:
+    def __init__(self, vehicle, route):
+        self.route: Route = route
+        self.vehicle = vehicle
+        self.trip_id = uuid.uuid4()
+
+
+class Route:
+    def __init__(self, start_point, end_point, start_date, end_date):
+        self.end_date: Date = end_date
+        self.start_date: Date = start_date
+        self.end_point: str = end_point
+        self.start_point: str = start_point
 
 
 birthday = Date(10, Months.MARCH, 2007)
-pers = Person("Naletov Artem", birthday, Gender.MALE, Phone())
+pers = Person("Naletov Artem", birthday, Gender.MALE, "")
 usr = User(pers, "Artem1000@gmail.com")
 print(usr.get_email())
+
+trp = Trip( "train", Route("Moscow","Samara" , Date(10, Months.MARCH , 2025), Date(11, Months.MARCH , 2025)))
+ticket = Ticket(usr , trp)
