@@ -1,30 +1,17 @@
-import uuid
-from typing import List, Dict
-from enum import Enum, unique
-import datetime
+from Transport import *
+from BookingSystem import *
+from Enums import *
+
+system = BookingSystem()
 
 
-
-class Booking_System:
-    def __init__(self):
-        self.Routes: Dict[str, 'Route'] = {}
-        self.Passengers: Dict[str, 'Passenger'] = {}
-        self.Bookings: Dict[str, 'Booking'] = {}
-        self.Transports: Dict[str, 'Transport'] = {}
+t = Transport(TransportType.BUS)
+t.add_section(24 , SeatsClass.ECONOMY)
 
 
-class Route:
-    def __init__(self):
-        pass
+t.set_seat_status(1,12, SeatStatus.BOOKED)
+t.print_transport_info()
 
-class Passenger:
-    def __init__(self):
-        pass
+system.add_transport(t)
 
-class Booking:
-    def __init__(self):
-        pass
-
-class Transport:
-    def __init__(self):
-        pass
+print(system.transports[t.transport_id])
