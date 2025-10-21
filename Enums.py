@@ -23,3 +23,11 @@ class SeatStatus(Enum):
     BUSY = 2
     BOOKED = 3
 
+class Paths(Enum):
+    JSON = "./Data/JSON"
+    XML = "./Data/XML"
+    PASSENGERS = ""
+    TRIPS = ""
+    TRANSPORTS = ""
+    ROUTES = ""
+    BOOKINGS = ""

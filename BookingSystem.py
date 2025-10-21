@@ -5,6 +5,7 @@ from Route import *
 from Passenger import *
 from Booking import *
 from Transport import *
+from Trip import *
 
 class BookingSystem:
     def __init__(self):
@@ -12,11 +13,12 @@ class BookingSystem:
         self.passengers: Dict[str, Passenger] = {}
         self.bookings: Dict[str, Booking] = {}
         self.transports: Dict[str, Transport] = {}
+        self.trips: Dict[str, Trip] = {}
         # self.file_system: FileSystem
 
-    def add_transport(self, transport: Transport):
-        transport_id = transport.transport_id.__str__()
-        self.transports[transport_id] = transport
+    def add_trip(self, trip: Trip):
+        self.trips[trip.number] = trip
+
 
 
 

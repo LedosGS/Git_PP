@@ -1,17 +1,21 @@
 from Transport import *
 from BookingSystem import *
 from Enums import *
+from Trip import *
 
 system = BookingSystem()
 
 
-t = Transport(TransportType.BUS)
-t.add_section(24 , SeatsClass.ECONOMY)
+t = Transport(TransportType.TRAIN,
+              "ivolga" ,
+              {SeatsClass.FIRST: 1,SeatsClass.BUSINESS: 2 , SeatsClass.ECONOMY: 5 },
+              {SeatsClass.FIRST: 2, SeatsClass.BUSINESS: 2, SeatsClass.ECONOMY: 5},
+              {SeatsClass.FIRST: 0, SeatsClass.BUSINESS: 0, SeatsClass.ECONOMY: 0})
 
+trip = Trip("7455" , Route() , t)
 
-t.set_seat_status(1,12, SeatStatus.BOOKED)
-t.print_transport_info()
+trip.set_seat_status(1, 1 , SeatStatus.BUSY)
+trip.show_sections_info()
 
-system.add_transport(t)
+system.add_trip(trip)
 
-print(system.transports[t.transport_id])
