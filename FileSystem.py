@@ -1,7 +1,7 @@
 import json
 from typing import Dict
 import json as J
-import xml as X
+import xml.etree.ElementTree as ET
 
 from Enums import *
 from Trip import *
@@ -19,27 +19,15 @@ class JsonSystem:
             trips: Dict[str, Trip] = {}
             data: dict = json.load(f)
             for k,v in data.items():
-                trip = Trip(v["number"],
-                            Transport(convert_transport_type(v["transport"]["transport_type"]),
-                                      v["transport"]["model"],
-                                      {SeatsClass.FIRST : v["transport"]["class_count_sections"]["FIRST"],
-                                       SeatsClass.BUSINESS : v["transport"]["class_count_sections"]["BUSINESS"],
-                                       SeatsClass.ECONOMY : v["transport"]["class_count_sections"]["ECONOMY"]},
-                                      {SeatsClass.FIRST: v["transport"]["clas_count_seat"]["FIRST"],
-                                       SeatsClass.BUSINESS: v["transport"]["clas_count_seat"]["BUSINESS"],
-                                       SeatsClass.ECONOMY: v["transport"]["clas_count_seat"]["ECONOMY"]},
-                                      {SeatsClass.FIRST: v["transport"]["seat_class_price"]["FIRST"],
-                                       SeatsClass.BUSINESS: v["transport"]["seat_class_price"]["BUSINESS"],
-                                       SeatsClass.ECONOMY: v["transport"]["seat_class_price"]["ECONOMY"]}
-                                      ))
+                trip = Trip(v["number"])
                 json_sections: dict = v["sections"]
                 sections: Dict[str, Section] = {}
                 for kj , vj in json_sections.items():
                     sections[kj] = Section(vj["total_seats"],
-                                           convert_seat_class_type(vj["seats"]["1"]["seat_class"]),
+                                           SeatsClass(vj["seats"]["1"]["seat_class"]),
                                            vj["name"])
                     for i in range(1 ,sections[kj].total_seats+1):
-                        sections[kj].seats[str(i)].seat_status = convert_seat_status_type(json_sections[kj]["seats"][str(i)]["seat_status"])
+                        sections[kj].seats[str(i)].seat_status = SeatStatus(json_sections[kj]["seats"][str(i)]["seat_status"])
 
 
                 trip.sections = sections
@@ -59,48 +47,84 @@ class XmlSystem:
     def __init__(self):
         pass
 
+    def load(self):
+        pass
+
+    def update(self, bs: 'BookingSystem'):
+        self.save_trip(bs.trips)
+
+    def save_trip(self, trips: Dict[str, Trip]):
+        root = ET.Element("Trips")
+        for k, trip in trips.items():
+            root.append(self.trip_to_xml(trip))
+
+        tree = ET.ElementTree(root)
+        tree.write(Paths.XML.value + Paths.TRIPS.value + Paths.DOT_XML.value, encoding="utf-8",xml_declaration=True)
+    def transport_to_xml(self, transport: Transport) -> ET.Element:
+        transport_root = ET.Element("transport")
+        ET.SubElement(transport_root, "id").text = transport.transport_id
+        ET.SubElement(transport_root, "model").text = transport.model
+        ET.SubElement(transport_root, "transport_type").text = transport.transport_type.name
+
+        seat_class_price = ET.SubElement(transport_root, "seat_class_price")
+        ET.SubElement(seat_class_price, "first_seat_class_price").text = str(transport.seat_class_price[SeatsClass.FIRST])
+        ET.SubElement(seat_class_price, "business_seat_class_price").text = str(transport.seat_class_price[SeatsClass.BUSINESS])
+        ET.SubElement(seat_class_price, "economy_seat_class_price").text = str(transport.seat_class_price[SeatsClass.ECONOMY])
+
+        class_count_sections = ET.SubElement(transport_root, "class_count_sections")
+        ET.SubElement(class_count_sections, "first_class_count_sections").text = str(transport.class_count_sections[SeatsClass.FIRST])
+        ET.SubElement(class_count_sections, "business_class_count_sections").text = str(transport.class_count_sections[SeatsClass.BUSINESS])
+        ET.SubElement(class_count_sections, "economy_class_count_sections").text = str(transport.class_count_sections[SeatsClass.ECONOMY])
+
+        clas_count_seat = ET.SubElement(transport_root, "clas_count_seat")
+        ET.SubElement(clas_count_seat, "first_class_count_seat").text = str(transport.clas_count_seat[SeatsClass.FIRST])
+        ET.SubElement(clas_count_seat, "business_class_count_seat").text = str(transport.clas_count_seat[SeatsClass.BUSINESS])
+        ET.SubElement(clas_count_seat, "economy_class_count_seat").text = str(transport.clas_count_seat[SeatsClass.ECONOMY])
+
+        return transport_root
+
+    def trip_to_xml(self, trip:Trip) -> ET.Element:
+        root_trip = ET.Element("trip")
+
+        ET.SubElement(root_trip, "number").text = trip.number
+        ET.SubElement(root_trip, "total_sections").text = str(trip.total_sections)
+        ET.SubElement(root_trip, "transport_id").text = trip.transport_id
+        root_sections = ET.SubElement(root_trip, "sections")
+
+        for k, v in trip.sections.items():
+            section_root = ET.SubElement(root_sections, "section")
+            section_root.text = k
+            ET.SubElement(section_root, "name").text = v.name
+            ET.SubElement(section_root, "total_seats").text = str(v.total_seats)
+            seats_root = ET.SubElement(section_root, "seats")
+            for ks, vs in v.seats.items():
+                seat_root = ET.SubElement(seats_root, "seat")
+                ET.SubElement(seat_root, "name").text = vs.name
+                ET.SubElement(seat_root, "seat_class").text = vs.seat_class.name
+                ET.SubElement(seat_root, "seat_status").text = vs.seat_status.name
+
+
+        return root_trip
+
+
+
 class FileSystem:
     def __init__(self):
         self.json = JsonSystem()
         self.xml = XmlSystem()
 
-    def create(self):
-        pass
+    def load(self, type_base: TypeBase):
+        if type_base == type_base.JSON:
+            return self.json.load()
+        if type_base == type_base.XML:
+            return self.xml.load()
 
-    def load(self):
-        return self.json.load()
-
-    def update(self, bs: 'BookingSystem'):
-        self.json.update(bs)
+    def update(self, bs: 'BookingSystem', type_base: TypeBase ):
+        if type_base == type_base.JSON:
+            self.json.update(bs)
+        if type_base == type_base.XML:
+            self.xml.update(bs)
 
     def delete(self):
         pass
 
-
-
-def convert_transport_type(str: str) -> TransportType:
-    if str == "TRAIN":
-        return TransportType.TRAIN
-    if str == "BUS":
-        return TransportType.BUS
-    if str == "SHIP":
-        return TransportType.SHIP
-    if str == "PLANE":
-        return TransportType.PLANE
-
-def convert_seat_status_type(str: str) -> SeatStatus:
-    if str == "FREE":
-        return SeatStatus.FREE
-    if str == "BUSY":
-        return SeatStatus.BUSY
-    if str == "BOOKED":
-        return SeatStatus.BOOKED
-
-
-def convert_seat_class_type(str: str) -> SeatsClass:
-    if str == "FIRST":
-        return SeatsClass.FIRST
-    if str == "BUSINESS":
-        return SeatsClass.BUSINESS
-    if str == "ECONOMY":
-        return SeatsClass.ECONOMY

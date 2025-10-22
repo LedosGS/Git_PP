@@ -33,3 +33,7 @@ class Paths(Enum):
     BOOKINGS = ""
     DOT_JSON = ".json"
     DOT_XML = ".xml"
+
+class TypeBase(Enum):
+    JSON = "JSON"
+    XML = "XML"
