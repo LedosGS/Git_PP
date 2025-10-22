@@ -14,7 +14,7 @@ SHIP_Section = "Floor"
 
 
 class Trip:
-    def __init__(self, number: str, route: Route, transport: Transport):
+    def __init__(self, number: str, transport: Transport):
         self.number: str = number
         # self.route: Route = route
         self.transport: Transport = transport
@@ -76,3 +76,8 @@ class Trip:
     def show_sections_info(self):
         for v in self.sections.values():
             print(v)
+
+    def serialize(self):
+        return{"number" : self.number,
+               "transport" : self.transport.serialize(),
+               "total_sections" : self.total_sections}

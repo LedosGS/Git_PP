@@ -14,12 +14,15 @@ class BookingSystem:
         self.bookings: Dict[str, Booking] = {}
         self.transports: Dict[str, Transport] = {}
         self.trips: Dict[str, Trip] = {}
-        # self.file_system: FileSystem
+        self.file_system: FileSystem = FileSystem()
 
     def add_trip(self, trip: Trip):
         self.trips[trip.number] = trip
 
 
+    def update_db(self):
+        self.file_system.update(self)
 
 
-
+    def load_db(self):
+        self.trips = self.file_system.load()

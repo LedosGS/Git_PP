@@ -2,15 +2,15 @@ from enum import Enum
 
 
 class TransportType(Enum):
-    TRAIN = 1
-    BUS = 2
-    SHIP = 3
-    PLANE = 4
+    TRAIN = "TRAIN"
+    BUS = "BUS"
+    SHIP = "SHIP"
+    PLANE = "PLANE"
 
 class SeatsClass(Enum):
-    FIRST = 1
-    BUSINESS = 2
-    ECONOMY = 3
+    FIRST = "FIRST"
+    BUSINESS = "BUSINESS"
+    ECONOMY = "ECONOMY"
 
 class BookingStatus(Enum):
     PENDING = 1
@@ -27,7 +27,9 @@ class Paths(Enum):
     JSON = "./Data/JSON"
     XML = "./Data/XML"
     PASSENGERS = ""
-    TRIPS = ""
+    TRIPS = "/Trips/Trips"
     TRANSPORTS = ""
     ROUTES = ""
     BOOKINGS = ""
+    DOT_JSON = ".json"
+    DOT_XML = ".xml"

@@ -1,0 +1,50 @@
+{
+    "7455": {
+        "number": "7455",
+        "transport": {
+            "id": "a0f20f31-aae9-43a2-a90f-a635b432a519",
+            "transport_type": "TRAIN",
+            "model": "ivolga",
+            "seat_class_price": {
+                "FIRST": 0,
+                "BUSINESS": 0,
+                "ECONOMY": 0
+            },
+            "class_count_sections": {
+                "FIRST": 1,
+                "BUSINESS": 2,
+                "ECONOMY": 5
+            },
+            "clas_count_seat": {
+                "FIRST": 2,
+                "BUSINESS": 2,
+                "ECONOMY": 5
+            }
+        },
+        "total_sections": 8
+    },
+    "6844": {
+        "number": "6844",
+        "transport": {
+            "id": "a0f20f31-aae9-43a2-a90f-a635b432a519",
+            "transport_type": "TRAIN",
+            "model": "ivolga",
+            "seat_class_price": {
+                "FIRST": 0,
+                "BUSINESS": 0,
+                "ECONOMY": 0
+            },
+            "class_count_sections": {
+                "FIRST": 1,
+                "BUSINESS": 2,
+                "ECONOMY": 5
+            },
+            "clas_count_seat": {
+                "FIRST": 2,
+                "BUSINESS": 2,
+                "ECONOMY": 5
+            }
+        },
+        "total_sections": 8
+    }
+}
