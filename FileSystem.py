@@ -7,6 +7,7 @@ from Enums import *
 from Trip import *
 from BookingSystem import *
 from Transport import *
+from Section import *
 
 class JsonSystem:
     def __init__(self):
@@ -31,6 +32,17 @@ class JsonSystem:
                                        SeatsClass.BUSINESS: v["transport"]["seat_class_price"]["BUSINESS"],
                                        SeatsClass.ECONOMY: v["transport"]["seat_class_price"]["ECONOMY"]}
                                       ))
+                json_sections: dict = v["sections"]
+                sections: Dict[str, Section] = {}
+                for kj , vj in json_sections.items():
+                    sections[kj] = Section(vj["total_seats"],
+                                           convert_seat_class_type(vj["seats"]["1"]["seat_class"]),
+                                           vj["name"])
+                    for i in range(1 ,sections[kj].total_seats+1):
+                        sections[kj].seats[str(i)].seat_status = convert_seat_status_type(json_sections[kj]["seats"][str(i)]["seat_status"])
+
+
+                trip.sections = sections
                 trips[k] = trip
         return trips
 
@@ -75,3 +87,20 @@ def convert_transport_type(str: str) -> TransportType:
         return TransportType.SHIP
     if str == "PLANE":
         return TransportType.PLANE
+
+def convert_seat_status_type(str: str) -> SeatStatus:
+    if str == "FREE":
+        return SeatStatus.FREE
+    if str == "BUSY":
+        return SeatStatus.BUSY
+    if str == "BOOKED":
+        return SeatStatus.BOOKED
+
+
+def convert_seat_class_type(str: str) -> SeatsClass:
+    if str == "FIRST":
+        return SeatsClass.FIRST
+    if str == "BUSINESS":
+        return SeatsClass.BUSINESS
+    if str == "ECONOMY":
+        return SeatsClass.ECONOMY

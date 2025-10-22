@@ -13,15 +13,15 @@ class SeatsClass(Enum):
     ECONOMY = "ECONOMY"
 
 class BookingStatus(Enum):
-    PENDING = 1
-    CONFIRMED = 2
-    COMPLETED = 3
-    CANCELLED = 4
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
 
 class SeatStatus(Enum):
-    FREE = 1
-    BUSY = 2
-    BOOKED = 3
+    FREE = "FREE"
+    BUSY = "BUSY"
+    BOOKED = "BOOKED"
 
 class Paths(Enum):
     JSON = "./Data/JSON"

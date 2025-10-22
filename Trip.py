@@ -80,4 +80,11 @@ class Trip:
     def serialize(self):
         return{"number" : self.number,
                "transport" : self.transport.serialize(),
-               "total_sections" : self.total_sections}
+               "total_sections" : self.total_sections,
+               "sections" : self.serialize_section_dict()}
+
+    def serialize_section_dict(self):
+        new_dict = {}
+        for k, v in self.sections.items():
+            new_dict[k] = v.serialize()
+        return new_dict
