@@ -24,13 +24,12 @@ class SeatStatus(Enum):
     BOOKED = "BOOKED"
 
 class Paths(Enum):
-    JSON = "./Data/JSON"
-    XML = "./Data/XML"
-    PASSENGERS = ""
-    TRIPS = "/Trips/Trips"
-    TRANSPORTS = ""
-    ROUTES = ""
-    BOOKINGS = ""
+    DATA = "./Data"
+    PASSENGERS = "/Passengers"
+    TRIPS = "/Trips"
+    TRANSPORTS = "/Transports"
+    ROUTES = "/Routes"
+    BOOKINGS = "/Bookings"
     DOT_JSON = ".json"
     DOT_XML = ".xml"
 

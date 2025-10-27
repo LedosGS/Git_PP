@@ -3,13 +3,7 @@
         "number": "7455",
         "transport_model": "ivolga",
         "total_sections": 8,
-        "route": {
-            "name": "Moscow - Samara",
-            "start_point": "Moscow",
-            "start_time": "2025-03-09 22:30:00",
-            "end_point": "Samara",
-            "end_time": "2025-03-10 12:30:00"
-        },
+        "route_number": "Moscow - Samara",
         "sections": {
             "Wagon 1": {
                 "name": "Wagon 1",
@@ -18,7 +12,7 @@
                     "1": {
                         "name": "1",
                         "seat_class": "FIRST",
-                        "seat_status": "FREE"
+                        "seat_status": "BUSY"
                     },
                     "2": {
                         "name": "2",

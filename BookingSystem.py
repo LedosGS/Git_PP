@@ -14,7 +14,8 @@ class BookingSystem:
         self.bookings: Dict[str, Booking] = {}
         self.transports: Dict[str, Transport] = {}
         self.trips: Dict[str, Trip] = {}
-        self.file_system: FileSystem = FileSystem()
+
+        self._file_system: FileSystem = FileSystem()
 
     def add_trip(self, trip: Trip):
         self.trips[trip.number] = trip
@@ -34,15 +35,35 @@ class BookingSystem:
 
     def buy_seat(self, passenger: Passenger, trip_number: str, section_number: int , seat_number: int ):
         trip = self.trips[trip_number]
-        cond, section, seat = trip.set_seat_status(section_number, seat_number , SeatStatus.BUSY)
-        booking = Booking(passenger, trip, section, seat)
-        self.bookings[booking.booking_id] = booking
+        transport = self.transports[trip.transport_model]
+
+        cond, section, seat, seat_class = self.trips[trip_number].set_seat_status(section_number, seat_number , SeatStatus.BUSY)
+        if cond:
+            cost = transport.seat_class_price[seat_class]
+            booking = Booking(passenger, trip, section, seat, cost)
+            self.bookings[booking.booking_id] = booking
+            self.passengers[passenger.document_number].use_money(cost)
+        else:
+            print("error buy seat")
 
     def show_trips(self):
         print(self.trips.keys())
+
+    def show_transports(self):
+        print(self.transports.keys())
+
+    def show_transports_info(self):
+        for k,v in self.transports.items():
+            print("\n")
+            v.show_info()
+
+    def show_trips_info(self):
+        for v in self.trips.values():
+            v.show_sections_info()
+
     def update_db(self, type_base: TypeBase):
-        self.file_system.update(self, type_base)
+        self._file_system.update(self)
 
 
     def load_db(self):
-        self.trips = self.file_system.load()
+        self.trips, self.transports = self._file_system.load()

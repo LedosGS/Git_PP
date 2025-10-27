@@ -1,0 +1,21 @@
+{
+    "ivolga": {
+        "transport_type": "TRAIN",
+        "model": "ivolga",
+        "seat_class_price": {
+            "FIRST": 100,
+            "BUSINESS": 20,
+            "ECONOMY": 5
+        },
+        "class_count_sections": {
+            "FIRST": 1,
+            "BUSINESS": 2,
+            "ECONOMY": 5
+        },
+        "clas_count_seat": {
+            "FIRST": 2,
+            "BUSINESS": 2,
+            "ECONOMY": 5
+        }
+    }
+}

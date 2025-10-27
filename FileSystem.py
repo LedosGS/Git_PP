@@ -2,6 +2,7 @@ import json
 from typing import Dict
 import json as J
 import xml.etree.ElementTree as ET
+import datetime
 
 from Enums import *
 from Trip import *
@@ -9,17 +10,28 @@ from BookingSystem import *
 from Transport import *
 from Section import *
 
+
 class JsonSystem:
     def __init__(self):
         pass
 
-    def load(self):
+    def load(self) -> (Dict[str, Trip] , Dict[str, Transport]):
+        transports: Dict[str, Transport] = self.parse_transports()
+        trips: Dict[str, Trip] = self.parse_trips(transports)
+        bookings: Dict[str, Booking] = {}
+        passengers: Dict[str, Passenger] = {}
+        # routes: Dict[str, Route] = {}
 
-        with open(Paths.JSON.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'r') as f:
-            trips: Dict[str, Trip] = {}
+
+        return trips , transports
+
+    def parse_trips(self, transports: Dict[str, Transport]) -> Dict[str, Trip]:
+        trips: Dict[str, Trip] = {}
+        with open(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'r') as f:
             data: dict = json.load(f)
+
             for k,v in data.items():
-                trip = Trip(v["number"])
+                trip = Trip(v["number"], v["route_number"], transports[v["transport_model"]])
                 json_sections: dict = v["sections"]
                 sections: Dict[str, Section] = {}
                 for kj , vj in json_sections.items():
@@ -34,13 +46,49 @@ class JsonSystem:
                 trips[k] = trip
         return trips
 
+    def parse_transports(self) -> Dict[str, Transport]:
+        transports: Dict[str, Transport] = {}
+
+        with open(Paths.DATA.value + Paths.TRANSPORTS.value + Paths.DOT_JSON.value, 'r') as f:
+            data: dict = json.load(f)
+            for k, v in data.items():
+
+                transport = Transport(TransportType(v["transport_type"]),
+                                      v["model"],
+                                      {SeatsClass.FIRST:v["class_count_sections"]["FIRST"],
+                                       SeatsClass.BUSINESS: v["class_count_sections"]["BUSINESS"],
+                                       SeatsClass.ECONOMY: v["class_count_sections"]["ECONOMY"]
+                                       },
+                                      {SeatsClass.FIRST:v["clas_count_seat"]["FIRST"],
+                                       SeatsClass.BUSINESS: v["clas_count_seat"]["BUSINESS"],
+                                       SeatsClass.ECONOMY: v["clas_count_seat"]["ECONOMY"]
+                                       },
+                                      {SeatsClass.FIRST:v["seat_class_price"]["FIRST"],
+                                       SeatsClass.BUSINESS: v["seat_class_price"]["BUSINESS"],
+                                       SeatsClass.ECONOMY: v["seat_class_price"]["ECONOMY"]
+                                       },)
+                transports[k] = transport
+        return transports
+
+
     def update(self, bs: 'BookingSystem'):
-        trips: Dict[str, 'Trip'] = bs.trips
-        with open(Paths.JSON.value + Paths.TRIPS.value + Paths.DOT_JSON.value , 'w') as f:
+        self.update_trips(bs.trips)
+        self.update_transports(bs.transports)
+
+    def update_trips(self, trips: Dict[str, Trip]):
+        with open(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'w') as f:
             json_dict = {}
-            for k,v in trips.items():
+            for k, v in trips.items():
                 json_dict[k] = v.serialize()
             json.dump(json_dict, f, indent=4)
+
+    def update_transports(self, transports: Dict[str, Transport]):
+        with open(Paths.DATA.value + Paths.TRANSPORTS.value + Paths.DOT_JSON.value, 'w') as f:
+            json_dict = {}
+            for k, v in transports.items():
+                json_dict[k] = v.serialize()
+            json.dump(json_dict, f, indent=4)
+
 
 
 class XmlSystem:
@@ -113,17 +161,12 @@ class FileSystem:
         self.json = JsonSystem()
         self.xml = XmlSystem()
 
-    def load(self, type_base: TypeBase):
-        if type_base == type_base.JSON:
-            return self.json.load()
-        if type_base == type_base.XML:
-            return self.xml.load()
+    def load(self):
+        return self.json.load()
 
-    def update(self, bs: 'BookingSystem', type_base: TypeBase ):
-        if type_base == type_base.JSON:
-            self.json.update(bs)
-        if type_base == type_base.XML:
-            self.xml.update(bs)
+    def update(self, bs: 'BookingSystem'):
+        self.json.update(bs)
+
 
     def delete(self):
         pass

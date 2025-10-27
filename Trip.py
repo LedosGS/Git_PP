@@ -14,9 +14,9 @@ SHIP_Section = "Floor"
 
 
 class Trip:
-    def __init__(self, number: str, route: Route, transport: Transport):
+    def __init__(self, number: str, route_name: str, transport: 'Transport'):
         self.number: str = number
-        self.route: Route = route
+        self.route_name: str = route_name
         self.transport_model: str = transport.model
         self.sections: Dict[str, Section] = {}
         self.total_sections: int = 0
@@ -50,27 +50,27 @@ class Trip:
             sn = f'{section_name}{self.total_sections}'
             self.sections[sn] = Section(transport.clas_count_seat[section_cls], section_cls, sn)
 
-    def set_seat_status(self, number_section: int, number_seat: int, seat_status: SeatStatus) -> (bool, str , str):
+    def set_seat_status(self, number_section: int, number_seat: int, seat_status: SeatStatus) -> (bool, str , str, SeatsClass):
+        t_type = ""
         if self.transport_type == TransportType.BUS:
-            if (self.total_sections >= number_section and len(self.sections[f'{BUS_Section} {str(number_section)}'].seats) >= number_seat):
-                self.sections[f'{BUS_Section} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
-                return True , f'{BUS_Section} {str(number_section)}', str(number_seat)
-            else:   return False
+            t_type = BUS_Section
         elif self.transport_type == TransportType.TRAIN:
-            if (self.total_sections >= number_section and len(self.sections[f'{TRAIN_Section} {str(number_section)}'].seats) >= number_seat):
-                self.sections[f'{TRAIN_Section} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
-                return True, f'{BUS_Section} {str(number_section)}', str(number_seat)
-            else:   return False
+            t_type = TRAIN_Section
         elif self.transport_type == TransportType.PLANE:
-            if (self.total_sections >= number_section and len(self.sections[f'{PLANE_Section} {str(number_section)}'].seats) >= number_seat):
-                self.sections[f'{PLANE_Section} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
-                return True, f'{BUS_Section} {str(number_section)}', str(number_seat)
-            else:   return False
+            t_type = PLANE_Section
         elif self.transport_type == TransportType.SHIP:
-            if (self.total_sections >= number_section and len(self.sections[f'{SHIP_Section} {str(number_section)}'].seats) >= number_seat):
-                self.sections[f'{SHIP_Section} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
-                return True, f'{BUS_Section} {str(number_section)}', str(number_seat)
-            else:   return False
+            t_type = SHIP_Section
+
+        if (self.total_sections >= number_section and len(self.sections[f'{t_type} {str(number_section)}'].seats) >= number_seat):
+            s_status = self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_status
+            if (s_status == SeatStatus.BUSY or s_status == SeatStatus.BOOKED):
+                return False, '' , '' , SeatStatus.BUSY
+            else:
+                self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
+                seat_class = self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_class
+                return True, f'{t_type} {str(number_section)}', str(number_seat), seat_class
+        else:
+            return False, '' , '' , SeatStatus.BUSY
 
     def show_sections_info(self):
         for v in self.sections.values():
@@ -80,7 +80,7 @@ class Trip:
         return{"number" : self.number,
                "transport_model" : self.transport_model,
                "total_sections" : self.total_sections,
-               "route":self.route.serialize(),
+               "route":self.route_name,
                "sections" : self.serialize_section_dict()}
 
     def serialize_section_dict(self):

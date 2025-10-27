@@ -19,9 +19,21 @@ class Transport:
         self.class_count_sections: Dict[SeatsClass , int] = cls_count_sections
         self.clas_count_seat: Dict[SeatsClass , int] = cls_count_seats
 
+    def show_info(self):
+        print(f'model: {self.model}\n'
+              f'transport type: {self.transport_type.name}')
+        for k, v in self.clas_count_seat.items():
+            print(f'count seats in 1 section: {v}\t seat class: {k.name}')
+        print('\n')
+        for k, v in self.class_count_sections.items():
+            print(f'count sections: {v}\t seat class: {k.name}')
+        print('\n')
+        for k, v in self.seat_class_price.items():
+            print(f'seat price: {v}\t seat class: {k.name}')
+
 
     def serialize(self):
-        return{               "transport_type" : self.transport_type.name,
+        return{"transport_type" : self.transport_type.name,
                "model" : self.model,
                "seat_class_price": serialize_dict(self.seat_class_price),
                "class_count_sections" : serialize_dict(self.class_count_sections),
