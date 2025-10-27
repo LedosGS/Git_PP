@@ -3,7 +3,7 @@
         "transport_type": "TRAIN",
         "model": "ivolga",
         "seat_class_price": {
-            "FIRST": 100,
+            "FIRST": 10000,
             "BUSINESS": 20,
             "ECONOMY": 5
         },

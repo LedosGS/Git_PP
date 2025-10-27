@@ -1,8 +1,10 @@
 import json
+import os
 from typing import Dict
 import json as J
 import xml.etree.ElementTree as ET
 import datetime
+from os import mkdir,remove
 
 from Enums import *
 from Trip import *
@@ -18,13 +20,40 @@ class JsonSystem:
     def load(self) -> (Dict[str, Trip] , Dict[str, Transport]):
         transports: Dict[str, Transport] = self.parse_transports()
         trips: Dict[str, Trip] = self.parse_trips(transports)
-        bookings: Dict[str, Booking] = {}
-        passengers: Dict[str, Passenger] = {}
+        passengers: Dict[str, Passenger] = self.parse_passengers()
+        bookings: Dict[str, Booking] = self.parse_bookings(passengers, trips)
         # routes: Dict[str, Route] = {}
 
 
-        return trips , transports
+        return trips , transports, passengers, bookings
 
+    def parse_passengers(self) -> Dict[str, Passenger]:
+        passengers: Dict[str, Passenger] = {}
+        with open(Paths.DATA.value + Paths.PASSENGERS.value + Paths.DOT_JSON.value, 'r') as f:
+            data: dict = json.load(f)
+            for k, v in data.items():
+                passenger = Passenger(v["document_number"],
+                                      v["name"],
+                                      v["birthday"],
+                                      v["phone"],
+                                      v["money"])
+                passengers[k] = passenger
+        return passengers
+
+    def parse_bookings(self, passengers: Dict[str, Passenger], trips: Dict[str, Trip]) -> Dict[str, Booking]:
+        bookings: Dict[str, Booking] = {}
+        with open(Paths.DATA.value + Paths.BOOKINGS.value + Paths.DOT_JSON.value, 'r') as f:
+            data: dict = json.load(f)
+            for k, v in data.items():
+                booking = Booking(passengers[v["passenger_document"]],
+                                  trips[v['trip_number']],
+                                  v["section_number"],
+                                  v["seat_number"],
+                                  v["cost"],
+                                  v["booking_status"])
+                booking.booking_id = v["id"]
+                bookings[k] = booking
+        return bookings
     def parse_trips(self, transports: Dict[str, Transport]) -> Dict[str, Trip]:
         trips: Dict[str, Trip] = {}
         with open(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'r') as f:
@@ -74,6 +103,23 @@ class JsonSystem:
     def update(self, bs: 'BookingSystem'):
         self.update_trips(bs.trips)
         self.update_transports(bs.transports)
+        self.update_bookings(bs.bookings)
+        self.update_passengers(bs.passengers)
+
+
+    def update_passengers(self, passengers: Dict[str, Passenger]):
+        with open(Paths.DATA.value + Paths.PASSENGERS.value + Paths.DOT_JSON.value, 'w') as f:
+            json_dict = {}
+            for k, v in passengers.items():
+                json_dict[k] = v.serialize()
+            json.dump(json_dict, f, indent=4)
+
+    def update_bookings(self, bookings: Dict[str, Booking]):
+        with open(Paths.DATA.value + Paths.BOOKINGS.value + Paths.DOT_JSON.value, 'w') as f:
+            json_dict = {}
+            for k, v in bookings.items():
+                json_dict[k] = v.serialize()
+            json.dump(json_dict, f, indent=4)
 
     def update_trips(self, trips: Dict[str, Trip]):
         with open(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'w') as f:
@@ -96,10 +142,11 @@ class XmlSystem:
         pass
 
     def load(self):
-        pass
+        routes: Dict[str, Route] = {}
+        return  routes
 
     def update(self, bs: 'BookingSystem'):
-        self.save_trip(bs.trips)
+        self.save_routes(bs.routes)
 
     def save_trip(self, trips: Dict[str, Trip]):
         root = ET.Element("Trips")
@@ -130,7 +177,6 @@ class XmlSystem:
         ET.SubElement(clas_count_seat, "economy_class_count_seat").text = str(transport.clas_count_seat[SeatsClass.ECONOMY])
 
         return transport_root
-
     def trip_to_xml(self, trip:Trip) -> ET.Element:
         root_trip = ET.Element("trip")
 
@@ -155,19 +201,64 @@ class XmlSystem:
         return root_trip
 
 
+    def save_routes(self, routes: Dict[str, Route]):
+        root = ET.Element("Routes")
+        for k, route in routes.items():
+            root.append(self.route_to_xml(route))
+
+        tree = ET.ElementTree(root)
+        tree.write(Paths.DATA.value + Paths.ROUTES.value + Paths.DOT_XML.value, encoding="utf-8", xml_declaration=True)
+        
+    
+    def route_to_xml(self, route: Route) -> ET.Element:
+        route_root = ET.Element("route")
+        ET.SubElement(route_root, "name").text = route.name
+        ET.SubElement(route_root, "start_point").text = route.start_point
+        ET.SubElement(route_root, "start_time").text = route.start_time
+        ET.SubElement(route_root, "end_point").text = route.end_point
+        ET.SubElement(route_root, "end_time").text = route.end_time
+        return route_root
+        
 
 class FileSystem:
     def __init__(self):
+        self.create()
         self.json = JsonSystem()
         self.xml = XmlSystem()
 
+    def create(self):
+        if (not os.path.exists(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value)):
+            trips_f = open(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'w')
+            trips_f.close()
+        if (not os.path.exists(Paths.DATA.value + Paths.PASSENGERS.value + Paths.DOT_JSON.value)):
+            passengers_f = open(Paths.DATA.value + Paths.PASSENGERS.value + Paths.DOT_JSON.value, 'w')
+            passengers_f.close()
+        if (not os.path.exists(Paths.DATA.value + Paths.BOOKINGS.value + Paths.DOT_JSON.value)):
+            bookings_f = open(Paths.DATA.value + Paths.BOOKINGS.value + Paths.DOT_JSON.value, 'w')
+            bookings_f.close()
+        if (not os.path.exists(Paths.DATA.value + Paths.TRANSPORTS.value + Paths.DOT_JSON.value)):
+            transports_f = open(Paths.DATA.value + Paths.TRANSPORTS.value + Paths.DOT_JSON.value, 'w')
+            transports_f.close()
+        if (not os.path.exists(Paths.DATA.value + Paths.ROUTES.value + Paths.DOT_XML.value)):
+            routes_f = open(Paths.DATA.value + Paths.ROUTES.value + Paths.DOT_XML.value, 'w')
+            routes_f.close()
+
     def load(self):
-        return self.json.load()
+        return self.json.load() , self.xml.load()
 
     def update(self, bs: 'BookingSystem'):
         self.json.update(bs)
+        self.xml.update(bs)
 
 
     def delete(self):
         pass
+
+    def drop_database(self):
+        os.remove(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value)
+        os.remove(Paths.DATA.value + Paths.TRANSPORTS.value + Paths.DOT_JSON.value)
+        os.remove(Paths.DATA.value + Paths.BOOKINGS.value + Paths.DOT_JSON.value)
+        os.remove(Paths.DATA.value + Paths.PASSENGERS.value + Paths.DOT_JSON.value)
+        os.remove(Paths.DATA.value + Paths.ROUTES.value + Paths.DOT_XML.value)
+
 

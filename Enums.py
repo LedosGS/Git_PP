@@ -25,7 +25,7 @@ class SeatStatus(Enum):
 
 class Paths(Enum):
     DATA = "./Data"
-    PASSENGERS = "/Passengers"
+    PASSENGERS = "/Passengers "
     TRIPS = "/Trips"
     TRANSPORTS = "/Transports"
     ROUTES = "/Routes"

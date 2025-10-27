@@ -68,11 +68,12 @@ class Trip:
             else:
                 self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
                 seat_class = self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_class
-                return True, f'{t_type} {str(number_section)}', str(number_seat), seat_class
+                return True, str(number_section), str(number_seat), seat_class
         else:
             return False, '' , '' , SeatStatus.BUSY
 
     def show_sections_info(self):
+        print(f'number: {self.number}')
         for v in self.sections.values():
             print(v)
 
@@ -80,7 +81,7 @@ class Trip:
         return{"number" : self.number,
                "transport_model" : self.transport_model,
                "total_sections" : self.total_sections,
-               "route":self.route_name,
+               "route_number":self.route_name,
                "sections" : self.serialize_section_dict()}
 
     def serialize_section_dict(self):

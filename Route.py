@@ -20,3 +20,10 @@ class Route:
                 "end_point": self.end_point,
                 "end_time": self.end_time,
                 }
+
+    def show_route_info(self):
+        print(f'name: {self.name}\n'
+              f'start point: {self.start_point}\n'
+              f'start time: {self.start_time}\n'
+              f'end point: {self.end_point}\n'
+              f'end time: {self.end_time}\n')
