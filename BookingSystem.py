@@ -52,6 +52,18 @@ class BookingSystem:
         else:
             print("error buy seat")
 
+    def book_seat(self, passenger: Passenger, trip_number: str, section_number: int , seat_number: int ):
+        trip = self.trips[trip_number]
+        transport = self.transports[trip.transport_model]
+
+        cond, section, seat, seat_class = self.trips[trip_number].set_seat_status(section_number, seat_number , SeatStatus.BOOKED)
+        if cond:
+            cost = transport.seat_class_price[seat_class]
+            booking = Booking(passenger, trip, section, seat, cost, BookingStatus.PENDING)
+            self.bookings[booking.booking_id] = booking
+        else:
+            print("error buy seat")
+
     def confirm_booking(self, passenger_document: str, booking_id: str):
         booking = self.bookings[booking_id]
         if (self.passengers[passenger_document].get_money() >= booking.cost):

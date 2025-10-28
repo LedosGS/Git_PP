@@ -244,7 +244,7 @@ class FileSystem:
             routes_f.close()
 
     def load(self):
-        return self.json.load() , self.xml.load()
+        return self.json.load()
 
     def update(self, bs: 'BookingSystem'):
         self.json.update(bs)

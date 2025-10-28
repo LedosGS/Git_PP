@@ -28,7 +28,7 @@
                     "1": {
                         "name": "1",
                         "seat_class": "BUSINESS",
-                        "seat_status": "BUSY"
+                        "seat_status": "BOOKED"
                     },
                     "2": {
                         "name": "2",
