@@ -14,5 +14,5 @@ os.system('cls')
 booking_system = BookingSystem()
 booking_system.load_db()
 booking_system.show_routes_info()
-# home_page()
+home_page()
 
