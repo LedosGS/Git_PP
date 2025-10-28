@@ -17,12 +17,12 @@ class JsonSystem:
     def __init__(self):
         pass
 
-    def load(self) -> (Dict[str, Trip] , Dict[str, Transport]):
+    def load(self):
         transports: Dict[str, Transport] = self.parse_transports()
         trips: Dict[str, Trip] = self.parse_trips(transports)
         passengers: Dict[str, Passenger] = self.parse_passengers()
         bookings: Dict[str, Booking] = self.parse_bookings(passengers, trips)
-        # routes: Dict[str, Route] = {}
+
 
 
         return trips , transports, passengers, bookings
@@ -54,6 +54,7 @@ class JsonSystem:
                 booking.booking_id = v["id"]
                 bookings[k] = booking
         return bookings
+    
     def parse_trips(self, transports: Dict[str, Transport]) -> Dict[str, Trip]:
         trips: Dict[str, Trip] = {}
         with open(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value, 'r') as f:
@@ -142,7 +143,7 @@ class XmlSystem:
         pass
 
     def load(self):
-        routes: Dict[str, Route] = {}
+        routes: Dict[str, Route] = self.load_routes()
         return  routes
 
     def update(self, bs: 'BookingSystem'):
@@ -155,6 +156,7 @@ class XmlSystem:
 
         tree = ET.ElementTree(root)
         tree.write(Paths.XML.value + Paths.TRIPS.value + Paths.DOT_XML.value, encoding="utf-8",xml_declaration=True)
+        
     def transport_to_xml(self, transport: Transport) -> ET.Element:
         transport_root = ET.Element("transport")
         ET.SubElement(transport_root, "id").text = transport.transport_id
@@ -177,6 +179,7 @@ class XmlSystem:
         ET.SubElement(clas_count_seat, "economy_class_count_seat").text = str(transport.clas_count_seat[SeatsClass.ECONOMY])
 
         return transport_root
+    
     def trip_to_xml(self, trip:Trip) -> ET.Element:
         root_trip = ET.Element("trip")
 
@@ -219,6 +222,18 @@ class XmlSystem:
         ET.SubElement(route_root, "end_time").text = route.end_time
         return route_root
         
+    def load_routes(self):
+        tree = ET.parse(Paths.DATA.value + Paths.ROUTES.value + Paths.DOT_XML.value)
+        root = tree.getroot()
+        routes: Dict[str, Route] ={}
+        for route_element in root.findall("route"):
+            sp = route_element.find("start_point").text
+            st = route_element.find("start_point").text
+            ep = route_element.find("start_point").text
+            et = route_element.find("start_point").text
+            route = Route(sp, ep, st, et)
+            routes[route.name] = route
+        return routes
 
 class FileSystem:
     def __init__(self):
@@ -244,15 +259,26 @@ class FileSystem:
             routes_f.close()
 
     def load(self):
-        return self.json.load()
+        return  self.xml.load()
 
     def update(self, bs: 'BookingSystem'):
         self.json.update(bs)
         self.xml.update(bs)
 
 
-    def delete(self):
-        pass
+    def delete(self, path: Paths):
+        if path == Paths.TRIPS:
+            os.remove(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value)
+        if path == Paths.PASSENGERS:
+            os.remove(Paths.DATA.value + Paths.PASSENGERS.value + Paths.DOT_JSON.value)
+        if path == Paths.BOOKINGS:
+            os.remove(Paths.DATA.value + Paths.BOOKINGS.value + Paths.DOT_JSON.value)
+        if path == Paths.TRANSPORTS:
+            os.remove(Paths.DATA.value + Paths.TRANSPORTS.value + Paths.DOT_JSON.value)
+        if path == Paths.ROUTES:
+            os.remove(Paths.DATA.value + Paths.ROUTES.value + Paths.DOT_XML.value)
+        else:
+            print("uncorrect path in FileSystem/def delete(path)")
 
     def drop_database(self):
         os.remove(Paths.DATA.value + Paths.TRIPS.value + Paths.DOT_JSON.value)

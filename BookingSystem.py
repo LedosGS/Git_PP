@@ -63,49 +63,61 @@ class BookingSystem:
             self.bookings[booking.booking_id] = booking
         else:
             print("error buy seat")
+            
+    def cancel_booking(self, passenger_document: str, booking_id: str):
+        booking = self.bookings[booking_id]
+        self.trips[booking.trip_number].set_seat_status(int(booking.section_number), int(booking.seat_number), SeatStatus.FREE)
+        self.bookings[booking_id].booking_status = BookingStatus.CANCELLED
+        self.passengers[passenger_document].add_money(booking.cost//2)
 
     def confirm_booking(self, passenger_document: str, booking_id: str):
         booking = self.bookings[booking_id]
+        self.trips[booking.trip_number].set_seat_status(int(booking.section_number), int(booking.seat_number), SeatStatus.BUSY)
         if (self.passengers[passenger_document].get_money() >= booking.cost):
             self.passengers[passenger_document].use_money(booking.cost)
             booking.booking_status = BookingStatus.CONFIRMED
             self.bookings[booking.booking_id] = booking
         else:
+            self.trips[booking.trip_number].set_seat_status(int(booking.section_number), int(booking.seat_number), SeatStatus.BOOKED)
             print("you are have not money, please add money and retry later")
 
     def show_trips(self):
         print(self.trips.keys())
 
     def show_transports(self):
-        print(self.transports.keys())
+        for k in self.transports.keys():
+            print(k)
 
     def show_transports_info(self):
         for k,v in self.transports.items():
-            print("\n")
             v.show_info()
+            print('\n')
 
     def show_trips_info(self):
         for v in self.trips.values():
             v.show_sections_info()
+            print('\n')
 
     def show_passengers_info(self):
         for v in self.passengers.values():
             v.show_passenger_info()
+            print('\n')
 
     def show_bookings_info(self):
         for v in self.bookings.values():
             v.show_booking_info()
+            print('\n')
 
     def show_routes_info(self):
         for v in self.routes.values():
             v.show_route_info()
+            print('\n')
 
     def update_db(self, type_base: TypeBase):
         self._file_system.update(self)
 
-
     def load_db(self):
-        self.trips, self.transports, self.passengers, self.bookings = self._file_system.load()
+        self.routes = self._file_system.load()
 
-    def drop_data(self):
+    def drop_data_base(self):
         self._file_system.drop_database()
