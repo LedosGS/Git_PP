@@ -4,7 +4,7 @@ from Enums import *
 from Passenger import *
 from Trip import *
 class Booking:
-    def __init__(self, passenger: Passenger, trip: 'Trip' , section_number: str, seat_number: str, cost: int, status: BookingStatus):
+    def __init__(self, passenger: Passenger, trip: 'Trip' , section_number: str, seat_number: str, cost: int):
         self.booking_id: str = str(uuid.uuid4())
 
         self.passenger_document: str = passenger.document_number
@@ -20,7 +20,7 @@ class Booking:
         self.transport_type: TransportType = trip.transport_type
         self.transport_model: str = trip.transport_model
 
-        self.booking_status: BookingStatus = status
+        self.booking_status: BookingStatus = BookingStatus.PENDING
 
     def serialize(self):
         return {"id": self.booking_id,

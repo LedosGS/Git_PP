@@ -1,0 +1,21 @@
+{
+    "Ivolga": {
+        "transport_type": "TRAIN",
+        "model": "Ivolga",
+        "seat_class_price": {
+            "FIRST": 1000,
+            "BUSINESS": 100,
+            "ECONOMY": 10
+        },
+        "class_count_sections": {
+            "FIRST": 1,
+            "BUSINESS": 1,
+            "ECONOMY": 1
+        },
+        "clas_count_seat": {
+            "FIRST": 5,
+            "BUSINESS": 3,
+            "ECONOMY": 10
+        }
+    }
+}

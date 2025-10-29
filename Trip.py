@@ -61,9 +61,10 @@ class Trip:
         elif self.transport_type == TransportType.SHIP:
             t_type = SHIP_Section
 
+
         if (self.total_sections >= number_section and len(self.sections[f'{t_type} {str(number_section)}'].seats) >= number_seat):
             s_status = self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_status
-            if (s_status == SeatStatus.BUSY or s_status == SeatStatus.BOOKED):
+            if ((s_status == SeatStatus.BUSY) or (s_status == SeatStatus.BOOKED)):
                 return False, '' , '' , SeatStatus.BUSY
             else:
                 self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
@@ -71,6 +72,22 @@ class Trip:
                 return True, str(number_section), str(number_seat), seat_class
         else:
             return False, '' , '' , SeatStatus.BUSY
+
+    def seat_status(self,  number_section: int, number_seat: int, seat_status: SeatStatus):
+        t_type = ""
+        if self.transport_type == TransportType.BUS:
+            t_type = BUS_Section
+        elif self.transport_type == TransportType.TRAIN:
+            t_type = TRAIN_Section
+        elif self.transport_type == TransportType.PLANE:
+            t_type = PLANE_Section
+        elif self.transport_type == TransportType.SHIP:
+            t_type = SHIP_Section
+
+        if (self.total_sections >= number_section and len(self.sections[f'{t_type} {str(number_section)}'].seats) >= number_seat):
+                self.sections[f'{t_type} {str(number_section)}'].seats[str(number_seat)].seat_status = seat_status
+        else:
+            print("ошибка в установке статуса")
 
     def show_sections_info(self):
         print(f'number: {self.number}')

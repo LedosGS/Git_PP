@@ -7,6 +7,7 @@ from Booking import *
 from Transport import *
 from Trip import *
 
+
 class BookingSystem:
     def __init__(self):
         self.routes: Dict[str, Route] = {}
@@ -15,7 +16,7 @@ class BookingSystem:
         self.transports: Dict[str, Transport] = {}
         self.trips: Dict[str, Trip] = {}
 
-        self._file_system: FileSystem = FileSystem()
+        self._file_system: 'FileSystem' = FileSystem()
 
     def add_trip(self, trip: Trip):
         self.trips[trip.number] = trip
@@ -29,46 +30,44 @@ class BookingSystem:
     def add_passenger(self, passenger: Passenger):
         self.passengers[passenger.document_number] = passenger
 
-    def add_booking(self, booking: Booking):
-        self.bookings[booking.booking_id] = booking
-
-
-    def buy_seat(self, passenger: Passenger, trip_number: str, section_number: int , seat_number: int ):
+    def buy_seat(self, passenger: Passenger, trip_number: str, section_number: int, seat_number: int):
         trip = self.trips[trip_number]
         transport = self.transports[trip.transport_model]
 
-        cond, section, seat, seat_class = self.trips[trip_number].set_seat_status(section_number, seat_number , SeatStatus.BUSY)
+        cond, section, seat, seat_class = self.trips[trip_number].set_seat_status(section_number, seat_number,
+                                                                                  SeatStatus.BUSY)
         if cond:
             cost = transport.seat_class_price[seat_class]
-            booking = Booking(passenger, trip, section, seat, cost, BookingStatus.PENDING)
+            booking = Booking(passenger, trip, section, seat, cost)
             self.bookings[booking.booking_id] = booking
             if (self.passengers[passenger.document_number].get_money() >= cost):
                 self.passengers[passenger.document_number].use_money(cost)
                 booking.booking_status = BookingStatus.CONFIRMED
                 self.bookings[booking.booking_id] = booking
             else:
-                print("you are have not money, please add money and retry later")
-                print("booking number:", booking.booking_id)
+                print("не хватает денег, пополните счёт и попробуйте позднее")
+                print("номер бронирования:", booking.booking_id)
         else:
-            print("error buy seat")
+            print("ошибка, место занято")
 
-    def book_seat(self, passenger: Passenger, trip_number: str, section_number: int , seat_number: int ):
+    def book_seat(self, passenger: Passenger, trip_number: str, section_number: int, seat_number: int):
         trip = self.trips[trip_number]
         transport = self.transports[trip.transport_model]
 
-        cond, section, seat, seat_class = self.trips[trip_number].set_seat_status(section_number, seat_number , SeatStatus.BOOKED)
+        cond, section, seat, seat_class = self.trips[trip_number].set_seat_status(section_number, seat_number,
+                                                                                  SeatStatus.BOOKED)
         if cond:
             cost = transport.seat_class_price[seat_class]
-            booking = Booking(passenger, trip, section, seat, cost, BookingStatus.PENDING)
+            booking = Booking(passenger, trip, section, seat, cost)
             self.bookings[booking.booking_id] = booking
         else:
-            print("error buy seat")
-            
+            print("ошибка, место занято")
+
     def cancel_booking(self, passenger_document: str, booking_id: str):
         booking = self.bookings[booking_id]
-        self.trips[booking.trip_number].set_seat_status(int(booking.section_number), int(booking.seat_number), SeatStatus.FREE)
+        self.trips[booking.trip_number].seat_status(int(booking.section_number), int(booking.seat_number), SeatStatus.FREE)
         self.bookings[booking_id].booking_status = BookingStatus.CANCELLED
-        self.passengers[passenger_document].add_money(booking.cost//2)
+        self.passengers[passenger_document].add_money(booking.cost // 2)
 
     def confirm_booking(self, passenger_document: str, booking_id: str):
         booking = self.bookings[booking_id]
@@ -78,8 +77,10 @@ class BookingSystem:
             booking.booking_status = BookingStatus.CONFIRMED
             self.bookings[booking.booking_id] = booking
         else:
-            self.trips[booking.trip_number].set_seat_status(int(booking.section_number), int(booking.seat_number), SeatStatus.BOOKED)
-            print("you are have not money, please add money and retry later")
+            self.trips[booking.trip_number].set_seat_status(int(booking.section_number), int(booking.seat_number),
+                                                            SeatStatus.BOOKED)
+            print("не хватает денег, пополните счёт и попробуйте позднее")
+            print("номер бронирования:", booking.booking_id)
 
     def show_trips(self):
         print(self.trips.keys())
@@ -88,8 +89,20 @@ class BookingSystem:
         for k in self.transports.keys():
             print(k)
 
+    def show_bookings(self):
+        for k in self.bookings.keys():
+            print(k)
+
+    def show_routes(self):
+        for k in self.routes.keys():
+            print(k)
+
+    def show_passengers(self):
+        for k in self.passengers.keys():
+            print(k)
+
     def show_transports_info(self):
-        for k,v in self.transports.items():
+        for k, v in self.transports.items():
             v.show_info()
             print('\n')
 
@@ -113,11 +126,11 @@ class BookingSystem:
             v.show_route_info()
             print('\n')
 
-    def update_db(self, type_base: TypeBase):
+    def update_db(self):
         self._file_system.update(self)
 
     def load_db(self):
-        self.routes = self._file_system.load()
+        self.trips, self.transports, self.passengers, self.bookings, self.routes = self._file_system.load()
 
-    def drop_data_base(self):
+    def drop_db(self):
         self._file_system.drop_database()

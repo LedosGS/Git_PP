@@ -1,0 +1,28 @@
+{
+    "92bf7a84-4edf-44d0-be61-5f8183b3b95e": {
+        "id": "92bf7a84-4edf-44d0-be61-5f8183b3b95e",
+        "passenger_document": "12245",
+        "passenger_name": "Artem",
+        "route_name": "Moscow - Samara",
+        "trip_number": "1234",
+        "section_number": "1",
+        "seat_number": "1",
+        "cost": 1000,
+        "transport_type": "TRAIN",
+        "transport_model": "Ivolga",
+        "booking_status": "CONFIRMED"
+    },
+    "102a380f-a235-4b7a-98f7-313e06eed14a": {
+        "id": "102a380f-a235-4b7a-98f7-313e06eed14a",
+        "passenger_document": "12245",
+        "passenger_name": "Artem",
+        "route_name": "Moscow - Samara",
+        "trip_number": "1234",
+        "section_number": "1",
+        "seat_number": "1",
+        "cost": 1000,
+        "transport_type": "TRAIN",
+        "transport_model": "Ivolga",
+        "booking_status": "PENDING"
+    }
+}
