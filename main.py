@@ -36,16 +36,19 @@ booking_system.add_transport(transport_1)
 booking_system.add_trip(trip_1)
 booking_system.add_route(route_1)
 
+
 booking_system.show_passengers_info()
 
-booking_system.buy_seat(passenger, trip_1.number, 1, 1)
+# booking_system.buy_seat(passenger, trip_1.number, 1, 1)
 
 booking_system.passengers[passenger.document_number].add_money(1000)
-booking_system.show_passengers_info()
-booking_system.confirm_booking(passenger.document_number, "92bf7a84-4edf-44d0-be61-5f8183b3b95e")
-# booking_system.cancel_booking(passenger.document_number, "92bf7a84-4edf-44d0-be61-5f8183b3b95e")
+# #
+# booking_system.show_passengers_info()
 
+booking_system.confirm_booking(passenger.document_number, "2d9c7f59-4d85-4310-a2ea-358dc66e9abe")
+booking_system.cancel_booking(passenger.document_number, "2d9c7f59-4d85-4310-a2ea-358dc66e9abe")
 
+#
 booking_system.show_bookings()
 booking_system.show_passengers_info()
 

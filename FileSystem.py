@@ -173,7 +173,6 @@ class JsonSystem:
             print(f'ошибка сохранения транспорта {e}')
 
 
-
 class XmlSystem:
     def __init__(self):
         pass

@@ -12,7 +12,7 @@
                     "1": {
                         "name": "1",
                         "seat_class": "FIRST",
-                        "seat_status": "BUSY"
+                        "seat_status": "FREE"
                     },
                     "2": {
                         "name": "2",

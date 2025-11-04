@@ -45,6 +45,7 @@ class BookingSystem:
                 booking.booking_status = BookingStatus.CONFIRMED
                 self.bookings[booking.booking_id] = booking
             else:
+                self.trips[trip_number].seat_status(section_number, seat_number, SeatStatus.FREE)
                 print("не хватает денег, пополните счёт и попробуйте позднее")
                 print("номер бронирования:", booking.booking_id)
         else:
