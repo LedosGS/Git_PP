@@ -1,5 +1,4 @@
 import re
-
 import requests
 
 hex_re = re.compile(r'\b#?([A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})\b')
@@ -16,7 +15,7 @@ def hex_in_string(string: str):
 
 def hex_in_file():
     try:
-        with open("file.txt", 'r') as f:
+        with open('file.txt', 'r') as f:
             data = f.read()
             hex_in_string(data)
     except Exception as E:
@@ -38,6 +37,8 @@ hex_in_file()
 hex_in_Web("https://colorscheme.ru/html-colors.html")
 
 
-
+if __name__ == '__main__':
+    import unit_test
+    unit_test.run_tests()
 
 
