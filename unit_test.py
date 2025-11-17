@@ -33,6 +33,10 @@ class TestHexRegex(unittest.TestCase):
         self.assertFalse(hex_bool("#FF45001"))  # 7 знаков
         self.assertFalse(hex_bool("#AA34FF549"))# 9 знаков
 
+    def test_hex_in_text(self):
+        text = "Black	#000000	No color intensity in any channel."
+        self.assertEqual(hex_in_string(text), ["#000000"])
+
 def run_tests():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()

@@ -48,8 +48,8 @@ print(hex_in_file())
 print(hex_in_Web("https://colorscheme.ru/html-colors.html"))
 
 
-# if __name__ == '__main__':
-#     import unit_test
-#     unit_test.run_tests()
+if __name__ == '__main__':
+    import unit_test
+    unit_test.run_tests()
 
 
