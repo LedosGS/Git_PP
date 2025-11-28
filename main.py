@@ -1,5 +1,5 @@
 import sys
-
+from PIL import Image, ImageOps
 import pygame
 import os, math
 
@@ -8,6 +8,7 @@ BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
 DARK_GRAY = (150, 150, 150)
 BLUE = (0, 0, 255)
+RED = (255, 0 , 0)
 SRC_IMAGES = "./src/images/"
 
 
@@ -59,7 +60,7 @@ class Button:
 
 
 class Entity:
-    def __init__(self, folder_name, position=(0, 0), width=64):
+    def __init__(self, folder_name, position=(0, 0), width=64, bound_point = (100 , 100)):
         self.condition_aray = {}
 
         count = 0
@@ -78,6 +79,12 @@ class Entity:
         self.ready_image = pygame.transform.scale(self.ready_image, (width, width // self.sch))
         self.position = (position[0], position[1] - self.ready_image.get_height())
 
+        self.bound_point = bound_point
+        self.center = (self.position[0] + self.ready_image.get_width()/2 , self.position[1] + self.ready_image.get_height()/2)
+        self.bound_rect = pygame.Rect(self.center[0] - self.bound_point[0],
+                                      self.center[1] - self.bound_point[1],
+                                      2 * (self.center[0] - self.bound_point[0]),
+                                      2 * (self.center[1] - self.bound_point[1]))
     def move_X(self, x_offset):
         self.position = (self.position[0] + x_offset, self.position[1])
 
@@ -94,6 +101,19 @@ class Entity:
 
     def scale(self, width):
         self.ready_image = pygame.transform.scale(self.ready_image, (width, width / self.sch))
+
+    def update_bound(self):
+        self.center = (self.center[0],self.ready_image.get_rect().center[1] + self.position[1])
+        self.bound_rect = pygame.Rect(self.center[0] - self.bound_point[0],
+                                      self.center[1] - self.bound_point[1],
+                                      2*self.bound_point[0],
+                                      2*self.bound_point[1])
+
+    def draw_bound(self):
+        self.update_bound()
+        screen.blit(self.ready_image, self.position)
+        pygame.draw.rect(screen, DARK_GRAY, self.bound_rect)
+        draw_point(screen, BLUE, self.center, 5)
 
     def draw(self):
         screen.blit(self.ready_image, self.position)
@@ -132,6 +152,9 @@ class Ground:
 
             self.tile_positions[i] -= speed
 
+class Cactus:
+    pass
+
 pygame.init()
 screen = pygame.display.set_mode(Resolutions.MAX, pygame.DOUBLEBUF | pygame.HWSURFACE)
 pygame.display.set_caption("Dino")
@@ -140,6 +163,11 @@ info = pygame.display.Info()
 color = WHITE
 font = pygame.font.Font(None, screen.get_height()//20)
 
+cactus:Entity
+dino: Entity
+ground: Ground
+
+
 current_state = GameState.MENU
 ground_height = screen.get_height() * 0.85
 last_time = pygame.time.get_ticks()
@@ -147,6 +175,23 @@ last_time = pygame.time.get_ticks()
 dino_step = 1
 dino_state = 0
 dino_seat = 0
+last_update = pygame.time.get_ticks()
+anim_speed = 100
+
+
+jump_height = screen.get_height()/3
+on_ground = True
+is_jumping = False
+dino_start_position_y = 0
+jump_duration = 0
+jump_time = 0
+jump_force = 1.0
+
+space_hold_time = 0
+is_space_pressed = False
+max_hold_time = 0.5
+
+
 
 FPS_limit = 75
 base_speed = 400
@@ -156,21 +201,21 @@ acceleration_rate = 12  # пикселей/секунду²
 game_time = 0
 score = 0.0
 
-dino: Entity
-ground: Ground
 
 button_resize = Button(screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
                        screen.get_width() / 20, "MI")
 
 
 def spawn_all_entitys():
-    global dino
-    global ground
+    global dino, dino_start_position_y, jump_height
+    global ground, cactus
     global screen
 
-    dino = Entity('dino', (0, ground_height), screen.get_height() // 4)
+    dino = Entity('dino', (0, ground_height), screen.get_height() // 4, (screen.get_width()/30 , screen.get_height()/10))
     ground = Ground('road', (0, ground_height), screen.get_height() * 2)
-
+    cactus = Entity('cactus', (0,0), screen.get_height() * 2)
+    dino_start_position_y = dino.position[1]
+    jump_height = screen.get_height() / 3
 
 def draw_menu():
     ground.draw()
@@ -178,36 +223,76 @@ def draw_menu():
     menu_text = font.render("Main Menu", True, BLACK)
     menu_text_2 = font.render("press space, Arrow Up or Down", True, BLACK)
     screen_text = font.render("screen mode", True, BLACK)
-    text_rect = menu_text.get_rect()
-    text_rect_2 = menu_text_2.get_rect()
-    screen_rect = screen_text.get_rect()
     screen.blit(menu_text, (screen.get_width() / 2, screen.get_height() / 10))
     screen.blit(menu_text_2, (screen.get_width() / 2, screen.get_height() / 5))
     screen.blit(screen_text, (screen.get_width() / 20, screen.get_height() / 20))
     button_resize.draw(screen)
 
 
-def draw_game():
+def draw_game(keys):
+
+    nepriyatno_text = font.render("Стоп! Мне не приятно!", True, BLACK)
     game_text = font.render("Game", True, BLACK)
     score_text = font.render(f'score: {int(score)}', True, BLACK)
     game_txt_rect = game_text.get_rect()
+    if keys[pygame.K_LEFT]:
+        screen.blit(nepriyatno_text, (screen.get_width() / 10, screen.get_height()* 0.6))
     screen.blit(score_text, (screen.get_width()*0.8 , screen.get_height() / 10))
     screen.blit(game_text, (screen.get_width() / 2 - game_txt_rect.width//2, screen.get_height() / 10))
-
+    if on_ground:   play_walking_anim()
     ground.draw()
-    dino.draw()
+    dino.draw_bound()
 
+def play_walking_anim():
+    global dino_state, dino_step, last_update, dino, anim_speed
+    now = pygame.time.get_ticks()
+    if now - last_update > anim_speed:
+        if dino_seat == 0:
+            dino_step = 1 if dino_step == 2 else 2
+            dino.set_image(dino_step + dino_state)
+        else:
+            dino.set_image(12)
+        last_update = now
 
-def game(dt):
-    global game_time
-    update_score()
-    draw_game()
-    if game_time < 1:
-        pass
-    else:
+def game(dt, keys):
+    global game_time, dino_state, dino_seat, on_ground, spase_hold_up, jump_force, is_space_pressed, space_hold_time, is_jumping
+
+    if not (game_time < 1) and (dino_seat == 0):
         ground.run(current_speed * dt)
+        update_score()
+
+    if keys[pygame.K_SPACE]:
+        on_ground = False
+
+    if not on_ground: jump(dt)
+
+    dino_seat = 1 if keys[pygame.K_LEFT] else 0
+    dino_state = 2 if keys[pygame.K_DOWN] else 0
+
     update_speed(dt)
-    print(current_speed)
+
+
+def jump(dt):
+    global jump_height, dino_start_position_y, on_ground, dino, jump_time, jump_duration
+
+    jump_time += dt
+
+    if jump_duration == 0:
+        jump_duration = 1.0
+
+    progress = jump_time / jump_duration
+
+    if progress <= 1.0:
+        height_factor = math.sin(math.pi * progress)
+        current_height = jump_height * height_factor
+        new_y = dino_start_position_y - current_height
+        dino.set_position((dino.position[0], new_y))
+    else:
+        dino.position = (dino.position[0], dino_start_position_y)
+        jump_time = 0
+        jump_duration = 0
+        on_ground = True
+
 
 
 def resize():
@@ -243,8 +328,6 @@ def update_speed(dt):
     if current_speed < max_speed:
         current_speed = min(max_speed, base_speed + acceleration_rate * game_time)
 
-def play_high_walking_anim():
-    pass
 
 def reset_speed():
     global current_speed, game_time
@@ -254,10 +337,12 @@ def reset_speed():
 def main():
     global current_state, dino_state, dino_step, dino_seat, last_time
 
+
     spawn_all_entitys()
     running = True
     dino.set_image(1)
     while running:
+        keys = pygame.key.get_pressed()
         current_time = pygame.time.get_ticks()
         dt = (current_time - last_time) / 1000
         last_time = current_time
@@ -271,6 +356,7 @@ def main():
             button_resize.is_hovered(mouse_pos)
 
             for event in pygame.event.get():
+
                 if event.type == pygame.QUIT:
                     running = False
                 elif button_resize.is_clicked(mouse_pos, event):
@@ -281,30 +367,11 @@ def main():
                     if event.key == pygame.K_SPACE:
                         current_state = GameState.GAME
 
-                    if event.key == pygame.K_RIGHT:
-                        if dino_step == 2:
-                            dino_step = 1
-                        else:
-                            dino_step += 1
-                        dino.set_image(dino_step + dino_state)
-
-                    if event.key == pygame.K_LEFT:
-                        if dino_seat == 1:
-                            dino_seat = 0
-                            dino.set_image(0)
-                        else:
-                            dino_seat = 1
-                            dino.set_image(12)
-
-                    if event.key == pygame.K_DOWN:
-                        if dino_state == 2:
-                            dino_state = 0
-                        else:
-                            dino_state += 2
-                        dino.set_image(dino_step + dino_state)
-
         elif current_state == GameState.GAME:
-            game(dt)
+
+            draw_game(keys)
+            game(dt, keys)
+
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -315,8 +382,11 @@ def main():
                     if event.key == pygame.K_SPACE:
                         pass
 
+
+
         pygame.display.flip()
         clock.tick(FPS_limit)
+
 
 
 if __name__ == '__main__':
