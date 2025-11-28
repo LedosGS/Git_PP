@@ -80,12 +80,18 @@ class Entity:
         self.ready_image = pygame.transform.scale(self.ready_image, (width, width // self.sch))
         self.position = (position[0], position[1] - self.ready_image.get_height())
 
+        self.x_bound_offset = 0
+        self.y_bound_offset = 0
         self.bound_point = bound_point
-        self.center = (self.position[0] + self.ready_image.get_width() / 2, self.position[1] + self.ready_image.get_height() / 2)
-        self.bound_rect = pygame.Rect(self.center[0] - self.bound_point[0],
-                                      self.center[1] - self.bound_point[1],
-                                      2 * (self.center[0] - self.bound_point[0]),
-                                      2 * (self.center[1] - self.bound_point[1]))
+        if self.bound_point == (0, 0):
+            self.center = self.ready_image.get_rect().center
+            self.bound_rect = self.ready_image.get_rect()
+        else:
+            self.center = (self.position[0] + self.ready_image.get_width() / 2, self.position[1] + self.ready_image.get_height() / 2)
+            self.bound_rect = pygame.Rect(self.center[0] - self.bound_point[0],
+                                          self.center[1] - self.bound_point[1],
+                                          2 * (self.center[0] - self.bound_point[0]),
+                                          2 * (self.center[1] - self.bound_point[1]))
 
     def set_image(self, num):
         try:
@@ -108,9 +114,16 @@ class Entity:
     def draw_bound(self):
         self.update_bound()
         screen.blit(self.ready_image, self.position)
-        pygame.draw.rect(screen, DARK_GRAY, self.bound_rect)
+
+        s = pygame.Surface((self.bound_rect.width, self.bound_rect.height), pygame.SRCALPHA)
+        s.fill((255, 0, 0, 128))
+        screen.blit(s, self.bound_rect.topleft)
+        # pygame.draw.rect(screen, (255, 0, 0, 60), self.bound_rect)
+
         draw_point(screen, BLUE, self.center, 5)
         draw_point(screen, RED, self.position, 5)
+
+
 
     def draw(self):
         screen.blit(self.ready_image, self.position)
@@ -159,9 +172,14 @@ class Cactus:
         for i in range(self.count):
             self.ents.append(Entity(folder_name, position, width, bound_point))
             self.ents[i].set_image(random.randint(0, 2))
-            self.ents[i].set_position((screen.get_width()/3 + i*100, screen.get_height()/2))
+            self.ents[i].set_position((self.position[0] + i * 100, self.position[1]))
 
         print(len(self.ents))
+
+    def set_position(self, position=(0, 0)):
+        self.position = position
+        for i in range(self.count):
+            self.ents[i].set_position((self.position[0] + i * 100, self.position[1]))
 
     def draw(self):
         for i in range(self.count):
@@ -174,14 +192,15 @@ class Cactus:
 
 dev_version = False
 pygame.init()
-screen = pygame.display.set_mode(Resolutions.MAX, pygame.DOUBLEBUF | pygame.HWSURFACE)
+screen = pygame.display.set_mode(Resolutions.MAX, pygame.SRCALPHA, pygame.DOUBLEBUF | pygame.HWSURFACE)
 pygame.display.set_caption("Dino")
 clock = pygame.time.Clock()
 info = pygame.display.Info()
 color = WHITE
 font = pygame.font.Font(None, screen.get_height() // 20)
 
-cactus: Entity
+cactus_2: Cactus
+cactus: Cactus
 dino: Entity
 ground: Ground
 
@@ -215,6 +234,7 @@ acceleration_rate = 12  # пикселей/секунду²
 game_time = 0
 score = 0.0
 
+
 button_resize = Button(screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
                        screen.get_width() / 20, "MI")
 
@@ -225,6 +245,7 @@ def spawn_all_entitys():
     global jump_height
     global ground
     global cactus
+    global cactus_2
     global screen
 
     dino = Entity('dino',
@@ -239,6 +260,11 @@ def spawn_all_entitys():
                     (screen.get_width() / 2, screen.get_height() / 2),
                     width=(screen.get_height() // 4),
                     bound_point=(screen.get_width() / 30, screen.get_height() / 10))
+    cactus_2 = Cactus('cactus',
+                    (screen.get_width() / 4, screen.get_height() / 4),
+                    width=(screen.get_height() // 4),
+                    bound_point=(screen.get_width() / 30, screen.get_height() / 10))
+
     dino_start_position_y = dino.position[1]
     jump_height = screen.get_height() / 3
 
@@ -270,9 +296,11 @@ def draw_game(keys):
     if not dev_version:
         dino.draw()
         cactus.draw()
+        cactus_2.draw()
     else:
         dino.draw_bound()
         cactus.draw_bound()
+        cactus_2.draw_bound()
 
 
 def play_walking_anim():
@@ -312,6 +340,8 @@ def game(dt, keys):
     if not on_ground:
         jump(dt)
 
+    cactus.set_position((cactus.position[0] - anim_speed*dt , cactus.position[1]))
+
     dino_seat = 1 if keys[pygame.K_LEFT] else 0
     dino_state = 2 if keys[pygame.K_DOWN] else 0
 
@@ -339,6 +369,8 @@ def jump(dt):
         jump_duration = 0
         on_ground = True
 
+def detect_collision(dino, cactus):
+    pass # пересечение через маски
 
 def resize():
     global dino, screen, ground_height, font, button_resize
