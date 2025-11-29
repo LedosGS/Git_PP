@@ -72,7 +72,7 @@ class Entity:
         print('file count:', count)
         try:
             for i in range(count):
-                self.condition_aray[i] = pygame.image.load(f'{SRC_IMAGES}{folder_name}/{folder_name}_{i}.png')
+                self.condition_aray[i] = pygame.image.load(f'{SRC_IMAGES}{folder_name}/{folder_name}_{i}.png').convert_alpha()
         except Exception as E:
             print(f'ошибка загрузки спрайтов: {E}')
         self.ready_image = self.condition_aray[0]
@@ -92,6 +92,12 @@ class Entity:
                                           self.center[1] - self.bound_point[1],
                                           2 * (self.center[0] - self.bound_point[0]),
                                           2 * (self.center[1] - self.bound_point[1]))
+    def get_sprite(self):
+        sprite = pygame.sprite.Sprite()
+        sprite.image = self.ready_image
+        sprite.rect = self.ready_image.get_rect()
+        sprite.mask = pygame.mask.from_surface(self.ready_image)
+        return sprite
 
     def set_image(self, num):
         try:
@@ -344,7 +350,8 @@ def game(dt, keys):
 
     dino_seat = 1 if keys[pygame.K_LEFT] else 0
     dino_state = 2 if keys[pygame.K_DOWN] else 0
-
+    if detect_collision():
+        print("YES")
     update_speed(dt)
 
 
@@ -369,8 +376,24 @@ def jump(dt):
         jump_duration = 0
         on_ground = True
 
-def detect_collision(dino, cactus):
-    pass # пересечение через маски
+def detect_collision():
+    global dino
+    global cactus
+    overlaps = []
+    dino_mask = pygame.mask.from_surface(dino.ready_image)
+
+
+    for i in range(len(cactus.ents)):
+        other_mask = pygame.mask.from_surface(cactus.ents[i].ready_image)
+        offset_x = cactus.ents[i].position[0] - dino.position[0]
+        offset_y = cactus.ents[i].position[1] - dino.position[1]
+        overlaps.append(dino_mask.overlap(other_mask, (offset_x, offset_y)))
+        screen.blit(dino.ready_image, dino.position[0], dino.ready_image.get_rect())
+
+
+    return False
+
+
 
 def resize():
     global dino, screen, ground_height, font, button_resize
@@ -392,7 +415,6 @@ def resize():
 
 
 def draw_point(surface, color, position, size=2):
-    """Рисует точку в указанной позиции"""
     pygame.draw.circle(surface, color, position, size)
 
 
