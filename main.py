@@ -1,200 +1,11 @@
 import sys
-from PIL import Image, ImageOps
 import pygame
-import os, math
-import random
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (200, 200, 200)
-DARK_GRAY = (150, 150, 150)
-BLUE = (0, 0, 255)
-RED = (255, 0, 0)
-SRC_IMAGES = "./src/images/"
-
-
-class GameState:
-    MENU = 0
-    GAME = 1
-    GAME_OVER = 2
-
-
-class Resolutions:
-    MIN = (1000, 500)
-    MAX = (1500, 750)
-
-
-class Button:
-    def __init__(self, x, y, width, height, text, color=GRAY, hover_color=DARK_GRAY):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.text = text
-        self.color = color
-        self.hover_color = hover_color
-        self.current_color = color
-        self.font = pygame.font.Font(None, 36)
-
-    def draw(self, surface):
-        # Рисуем прямоугольник кнопки
-        pygame.draw.rect(surface, self.current_color, self.rect)
-        pygame.draw.rect(surface, BLACK, self.rect, 2)  # Обводка
-
-        # Рендерим текст
-        text_surface = self.font.render(self.text, True, BLACK)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        surface.blit(text_surface, text_rect)
-
-    def is_hovered(self, pos):
-        # Проверяем, находится ли курсор над кнопкой
-        if self.rect.collidepoint(pos):
-            self.current_color = self.hover_color
-            return True
-        else:
-            self.current_color = self.color
-            return False
-
-    def is_clicked(self, pos, event):
-        # Проверяем, была ли кнопка нажата
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(pos):
-                return True
-        return False
-
-
-class Entity:
-    def __init__(self, folder_name, position=(0, 0), width=64, bound_point=(100, 100)):
-        self.condition_aray = {}
-
-        count = 0
-        dir_path = SRC_IMAGES + folder_name
-        for path in os.scandir(dir_path):
-            if path.is_file():
-                count += 1
-        print('file count:', count)
-        try:
-            for i in range(count):
-                self.condition_aray[i] = pygame.image.load(f'{SRC_IMAGES}{folder_name}/{folder_name}_{i}.png').convert_alpha()
-        except Exception as E:
-            print(f'ошибка загрузки спрайтов: {E}')
-        self.ready_image = self.condition_aray[0]
-        self.sch = self.ready_image.get_width() / self.ready_image.get_height()
-        self.ready_image = pygame.transform.scale(self.ready_image, (width, width // self.sch))
-        self.position = (position[0], position[1] - self.ready_image.get_height())
-
-        self.x_bound_offset = 0
-        self.y_bound_offset = 0
-        self.bound_point = bound_point
-        if self.bound_point == (0, 0):
-            self.center = self.ready_image.get_rect().center
-            self.bound_rect = self.ready_image.get_rect()
-        else:
-            self.center = (self.position[0] + self.ready_image.get_width() / 2, self.position[1] + self.ready_image.get_height() / 2)
-            self.bound_rect = pygame.Rect(self.center[0] - self.bound_point[0],
-                                          self.center[1] - self.bound_point[1],
-                                          2 * (self.center[0] - self.bound_point[0]),
-                                          2 * (self.center[1] - self.bound_point[1]))
-    def get_sprite(self):
-        sprite = pygame.sprite.Sprite()
-        sprite.image = self.ready_image
-        sprite.rect = self.ready_image.get_rect()
-        sprite.mask = pygame.mask.from_surface(self.ready_image)
-        return sprite
-
-    def set_image(self, num):
-        try:
-            width = self.ready_image.get_width()
-            self.ready_image = self.condition_aray[num]
-            self.scale(width)
-        except Exception as E:
-            print(f'ошибка использования спрайта: {E}')
-
-    def scale(self, width):
-        self.ready_image = pygame.transform.scale(self.ready_image, (width, width / self.sch))
-
-    def update_bound(self):
-        self.center = (self.ready_image.get_rect().center[0] + self.position[0] , self.ready_image.get_rect().center[1] + self.position[1])
-        self.bound_rect = pygame.Rect(self.center[0] - self.bound_point[0],
-                                      self.center[1] - self.bound_point[1],
-                                      2 * self.bound_point[0],
-                                      2 * self.bound_point[1])
-
-    def draw_bound(self):
-        self.update_bound()
-        screen.blit(self.ready_image, self.position)
-
-        s = pygame.Surface((self.bound_rect.width, self.bound_rect.height), pygame.SRCALPHA)
-        s.fill((255, 0, 0, 128))
-        screen.blit(s, self.bound_rect.topleft)
-        # pygame.draw.rect(screen, (255, 0, 0, 60), self.bound_rect)
-
-        draw_point(screen, BLUE, self.center, 5)
-        draw_point(screen, RED, self.position, 5)
-
-
-
-    def draw(self):
-        screen.blit(self.ready_image, self.position)
-
-    def set_position(self, position):
-        self.position = position
-        self.update_bound()
-
-    def get_h(self):
-        return self.ready_image.get_height()
-
-    def get_w(self):
-        return self.ready_image.get_width()
-
-
-class Ground:
-    def __init__(self, folder_name, position=(0, 0), width=64):
-        self.ent = Entity(folder_name, position, width)
-        self.tile_positions = [0, self.ent.get_w()]
-        self.flag = 1
-        self.position = position
-
-    def draw(self):
-        for i in self.tile_positions:
-            ent = self.ent
-            ent.position = (i, ent.position[1])
-            ent.draw()
-
-    def run(self, speed):
-        for i in range(len(self.tile_positions)):
-            if self.tile_positions[i] < -self.ent.get_w():
-                self.tile_positions[i] = self.tile_positions[self.flag] + self.ent.get_w()
-                if self.flag == 1:
-                    self.flag = 0
-                else:
-                    self.flag = 1
-
-            self.tile_positions[i] -= speed
-
-
-class Cactus:
-    def __init__(self, folder_name, position=(0, 0), width=64, min_scale=0.5, max_scale=1, bound_point=(0, 0)):
-        self.count = random.randint(1, 3)
-        self.position = position
-        self.ents = []
-        for i in range(self.count):
-            self.ents.append(Entity(folder_name, position, width, bound_point))
-            self.ents[i].set_image(random.randint(0, 2))
-            self.ents[i].set_position((self.position[0] + i * 100, self.position[1]))
-
-        print(len(self.ents))
-
-    def set_position(self, position=(0, 0)):
-        self.position = position
-        for i in range(self.count):
-            self.ents[i].set_position((self.position[0] + i * 100, self.position[1]))
-
-    def draw(self):
-        for i in range(self.count):
-            self.ents[i].draw()
-
-    def draw_bound(self):
-        for i in range(self.count):
-            self.ents[i].draw_bound()
-
+import math
+# from constants import *
+# from Entity import *
+from Button import *
+from Ground import *
+from Cactus import *
 
 dev_version = False
 pygame.init()
@@ -240,8 +51,7 @@ acceleration_rate = 12  # пикселей/секунду²
 game_time = 0
 score = 0.0
 
-
-button_resize = Button(screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
+button_resize = Button(screen, screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
                        screen.get_width() / 20, "MI")
 
 
@@ -254,22 +64,17 @@ def spawn_all_entitys():
     global cactus_2
     global screen
 
-    dino = Entity('dino',
+    dino = Entity(screen, 'dino',
                   (0, ground_height),
-                  screen.get_height() // 4,
-                  (screen.get_width() / 30, screen.get_height() / 10))
+                  screen.get_width() // 10,
+                  (0, 0, 0, 0))
 
-    ground = Ground('road',
+    ground = Ground(screen, 'road',
                     (0, ground_height),
-                    screen.get_height() * 2)
-    cactus = Cactus('cactus',
+                    screen.get_width())
+    cactus = Cactus(screen, 'cactus',
                     (screen.get_width() / 2, screen.get_height() / 2),
-                    width=(screen.get_height() // 4),
-                    bound_point=(screen.get_width() / 30, screen.get_height() / 10))
-    cactus_2 = Cactus('cactus',
-                    (screen.get_width() / 4, screen.get_height() / 4),
-                    width=(screen.get_height() // 4),
-                    bound_point=(screen.get_width() / 30, screen.get_height() / 10))
+                    width=(screen.get_width() // 10))
 
     dino_start_position_y = dino.position[1]
     jump_height = screen.get_height() / 3
@@ -302,11 +107,9 @@ def draw_game(keys):
     if not dev_version:
         dino.draw()
         cactus.draw()
-        cactus_2.draw()
     else:
         dino.draw_bound()
         cactus.draw_bound()
-        cactus_2.draw_bound()
 
 
 def play_walking_anim():
@@ -346,12 +149,13 @@ def game(dt, keys):
     if not on_ground:
         jump(dt)
 
-    cactus.set_position((cactus.position[0] - anim_speed*dt , cactus.position[1]))
+    cactus.set_position((cactus.position[0] - anim_speed * dt, cactus.position[1]))
 
     dino_seat = 1 if keys[pygame.K_LEFT] else 0
     dino_state = 2 if keys[pygame.K_DOWN] else 0
+
     if detect_collision():
-        print("YES")
+        print("yeas")
     update_speed(dt)
 
 
@@ -376,23 +180,15 @@ def jump(dt):
         jump_duration = 0
         on_ground = True
 
+
 def detect_collision():
     global dino
     global cactus
-    overlaps = []
-    dino_mask = pygame.mask.from_surface(dino.ready_image)
 
-
-    for i in range(len(cactus.ents)):
-        other_mask = pygame.mask.from_surface(cactus.ents[i].ready_image)
-        offset_x = cactus.ents[i].position[0] - dino.position[0]
-        offset_y = cactus.ents[i].position[1] - dino.position[1]
-        overlaps.append(dino_mask.overlap(other_mask, (offset_x, offset_y)))
-        screen.blit(dino.ready_image, dino.position[0], dino.ready_image.get_rect())
-
-
+    for ent in cactus.ents:
+        if pygame.Rect.colliderect(dino.bound_rect , ent.bound_rect):
+            return True
     return False
-
 
 
 def resize():
@@ -412,10 +208,6 @@ def resize():
         ground_height = screen.get_height() * 0.85
         font = pygame.font.Font(None, screen.get_height() // 20)
         spawn_all_entitys()
-
-
-def draw_point(surface, color, position, size=2):
-    pygame.draw.circle(surface, color, position, size)
 
 
 def update_score():
