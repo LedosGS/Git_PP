@@ -4,23 +4,20 @@ from constants import *
 
 
 class Entity:
-    def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64, bound=(100, 100, 0, 0)):
+    def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64):
         self.screen = screen
 
         self.condition_aray = {}
         self.load_images(folder_name)
-        self.ready_image = self.condition_aray[0]
+        self.image_n = 0
+        self.ready_image = self.condition_aray[self.image_n]
 
         self.sch = self.ready_image.get_width() / self.ready_image.get_height()
         self.ready_image = pygame.transform.scale(self.ready_image, (width, width // self.sch))
 
         self.position = (position[0], position[1] - self.ready_image.get_height())
-
-        self.bound = bound
         self.center = (self.position[0] + self.ready_image.get_width() / 2,
                        self.position[1] + self.ready_image.get_height() / 2)
-        self.bound_rect = EMPTY4
-        self.update_bound()
 
     def load_images(self, folder_name):
         count = 0
@@ -39,28 +36,13 @@ class Entity:
     def scale_img(self, width):
         self.ready_image = pygame.transform.scale(self.ready_image, (width, width / self.sch))
 
-    def update_bound(self):
+    def update_center(self):
         self.center = (self.ready_image.get_rect().center[0] + self.position[0],
                        self.ready_image.get_rect().center[1] + self.position[1])
-        if self.bound == EMPTY4:
-            self.bound_rect = self.ready_image.get_rect()
-            self.bound_rect.x = self.position[0]
-            self.bound_rect.y = self.position[1]
-        else:
-            self.bound_rect = pygame.Rect(self.center[0] - self.bound[0],
-                                          self.center[1] - self.bound[1],
-                                          2 * self.bound[0],
-                                          2 * self.bound[1])
 
-    def draw_bound(self):
-        self.update_bound()
+    def draw_dev(self):
+        self.update_center()
         self.screen.blit(self.ready_image, self.position)
-
-        s = pygame.Surface((self.bound_rect.width, self.bound_rect.height), pygame.SRCALPHA)
-        s.fill((255, 0, 0, 128))
-        self.screen.blit(s, self.bound_rect.topleft)
-        # pygame.draw.rect(screen, (255, 0, 0, 60), self.bound_rect)
-
         pygame.draw.circle(self.screen, BLUE, self.center, 5)
         pygame.draw.circle(self.screen, RED, self.position, 5)
 
@@ -77,7 +59,7 @@ class Entity:
 
     def set_position(self, position):
         self.position = position
-        self.update_bound()
+        self.update_center()
 
     def get_h(self):
         return self.ready_image.get_height()

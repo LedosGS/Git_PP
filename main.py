@@ -3,6 +3,7 @@ import pygame
 import math
 # from constants import *
 # from Entity import *
+from Dino import *
 from Button import *
 from Ground import *
 from Cactus import *
@@ -17,8 +18,8 @@ color = WHITE
 font = pygame.font.Font(None, screen.get_height() // 20)
 
 cactus_2: Cactus
-cactus: Cactus
-dino: Entity
+cactus: Cactus_group
+dino: Dino
 ground: Ground
 
 current_state = GameState.MENU
@@ -61,18 +62,16 @@ def spawn_all_entitys():
     global jump_height
     global ground
     global cactus
-    global cactus_2
     global screen
 
-    dino = Entity(screen, 'dino',
+    dino = Dino(screen, 'dino',
                   (0, ground_height),
-                  screen.get_width() // 10,
-                  (0, 0, 0, 0))
+                  screen.get_width() // 10)
 
     ground = Ground(screen, 'road',
                     (0, ground_height),
                     screen.get_width())
-    cactus = Cactus(screen, 'cactus',
+    cactus = Cactus_group(screen, 'cactus',
                     (screen.get_width() / 2, screen.get_height() / 2),
                     width=(screen.get_width() // 10))
 
@@ -108,8 +107,8 @@ def draw_game(keys):
         dino.draw()
         cactus.draw()
     else:
-        dino.draw_bound()
-        cactus.draw_bound()
+        dino.draw_dev()
+        cactus.draw_dev()
 
 
 def play_walking_anim():
@@ -130,14 +129,11 @@ def play_walking_anim():
 
 
 def game(dt, keys):
+    global current_state
     global game_time
     global dino_state
     global dino_seat
     global on_ground
-    global jump_force
-    global is_space_pressed
-    global space_hold_time
-    global is_jumping
 
     if not (game_time < 1) and (dino_seat == 0):
         ground.run(current_speed * dt)
@@ -150,12 +146,16 @@ def game(dt, keys):
         jump(dt)
 
     cactus.set_position((cactus.position[0] - anim_speed * dt, cactus.position[1]))
+    print(dino.position, cactus.cactus_array[0].bounds[0].topleft)
 
     dino_seat = 1 if keys[pygame.K_LEFT] else 0
     dino_state = 2 if keys[pygame.K_DOWN] else 0
 
     if detect_collision():
         print("yeas")
+        current_state = GameState.MENU
+        spawn_all_entitys()
+
     update_speed(dt)
 
 
@@ -185,9 +185,11 @@ def detect_collision():
     global dino
     global cactus
 
-    for ent in cactus.ents:
-        if pygame.Rect.colliderect(dino.bound_rect , ent.bound_rect):
-            return True
+    for i in (range(len(cactus.cactus_array))):
+        for p in dino.collide_points:
+            if cactus.cactus_array[i].collide_with_point(p):
+                return True
+
     return False
 
 
