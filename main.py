@@ -1,4 +1,6 @@
 import sys
+import time
+
 import pygame
 import math
 # from constants import *
@@ -40,10 +42,6 @@ jump_duration = 0
 jump_time = 0
 jump_force = 1.0
 
-space_hold_time = 0
-is_space_pressed = False
-max_hold_time = 0.5
-
 FPS_limit = 75
 base_speed = 400
 current_speed = base_speed
@@ -51,6 +49,7 @@ max_speed = 2400
 acceleration_rate = 12  # пикселей/секунду²
 game_time = 0
 score = 0.0
+max_score = 0
 
 button_resize = Button(screen, screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
                        screen.get_width() / 20, "MI")
@@ -79,6 +78,8 @@ def spawn_all_entitys():
     jump_height = screen.get_height() / 3
 
 
+
+
 def draw_menu():
     ground.draw()
     dino.draw()
@@ -94,10 +95,12 @@ def draw_menu():
 def draw_game(keys):
     nepriyatno_text = font.render("Стоп! Мне не приятно!", True, BLACK)
     game_text = font.render("Game", True, BLACK)
-    score_text = font.render(f'score: {int(score)}', True, BLACK)
+    score_text = font.render(f'HI: {int(max_score)}  score: {int(score)}', True, BLACK)
     game_txt_rect = game_text.get_rect()
+
     if keys[pygame.K_LEFT]:
         screen.blit(nepriyatno_text, (screen.get_width() / 10, screen.get_height() * 0.6))
+
     screen.blit(score_text, (screen.get_width() * 0.8, screen.get_height() / 10))
     screen.blit(game_text, (screen.get_width() / 2 - game_txt_rect.width // 2, screen.get_height() / 10))
     if on_ground:
@@ -127,6 +130,16 @@ def play_walking_anim():
             dino.set_image(12)
         last_update = now
 
+def reset_game():
+    global on_ground
+    global jump_time
+    global jump_duration
+    dino.position = (dino.position[0], dino_start_position_y)
+    jump_time = 0
+    jump_duration = 0
+    on_ground = True
+
+    reset_speed()
 
 def game(dt, keys):
     global current_state
@@ -137,35 +150,39 @@ def game(dt, keys):
 
     if not (game_time < 1) and (dino_seat == 0):
         ground.run(current_speed * dt)
+        cactus.set_position((cactus.position[0] - current_speed * dt, cactus.position[1]))
         update_score()
 
-    if keys[pygame.K_SPACE]:
+    if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
         on_ground = False
 
     if not on_ground:
         jump(dt)
-
-    cactus.set_position((cactus.position[0] - anim_speed * dt, cactus.position[1]))
-    print(dino.position, cactus.cactus_array[0].bounds[0].topleft)
+        if dino.image_n != 0:
+            dino.set_image(0)
 
     dino_seat = 1 if keys[pygame.K_LEFT] else 0
     dino_state = 2 if keys[pygame.K_DOWN] else 0
 
     if detect_collision():
-        print("yeas")
-        current_state = GameState.MENU
-        spawn_all_entitys()
+        reset_game()
+        current_state = GameState.GAME_OVER
 
     update_speed(dt)
 
 
 def jump(dt):
-    global jump_height, dino_start_position_y, on_ground, dino, jump_time, jump_duration
+    global jump_height
+    global dino_start_position_y
+    global dino
+    global jump_time
+    global jump_duration
+    global on_ground
 
     jump_time += dt
 
     if jump_duration == 0:
-        jump_duration = 1.0
+        jump_duration = 0.7
 
     progress = jump_time / jump_duration
 
@@ -189,13 +206,11 @@ def detect_collision():
         for p in dino.collide_points:
             if cactus.cactus_array[i].collide_with_point(p):
                 return True
-
     return False
 
 
 def resize():
     global dino, screen, ground_height, font, button_resize
-
     if button_resize.text == "MI":
         button_resize.text = "MA"
         screen = pygame.display.set_mode(Resolutions.MIN)
@@ -225,10 +240,10 @@ def update_speed(dt):
 
 
 def reset_speed():
-    global current_speed, game_time
+    global current_speed, game_time, max_score
+    max_score = max(score, max_score)
     current_speed = base_speed
     game_time = 0
-
 
 def main(args):
     global current_state, dino_state, dino_step, dino_seat, last_time, dev_version
@@ -264,7 +279,7 @@ def main(args):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                         current_state = GameState.GAME
 
         elif current_state == GameState.GAME:
@@ -278,8 +293,19 @@ def main(args):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
-                    if event.key == pygame.K_SPACE:
-                        pass
+
+
+        elif current_state == GameState.GAME_OVER:
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                        spawn_all_entitys()
+                        current_state = GameState.MENU
 
         pygame.display.flip()
         clock.tick(FPS_limit)

@@ -22,15 +22,18 @@ class Dino(Entity):
             print(f'ошибка использования спрайта: {E}')
 
     def update_collide_points(self):
+        w = self.ready_image.get_width()
+        h = self.ready_image.get_height()
+
         if self.image_n == 3 or self.image_n == 4:
-            self.collide_points = [(0, 0),
-                                   (0, 0)]
+            self.collide_points = [(self.center[0] + w / 2.3, self.center[1] + h/9 ),
+                                   (self.center[0] + w / 4.5, self.center[1])]
         else:
-            self.collide_points = [(self.center[0] + self.ready_image.get_width() / 2, self.center[1]),
-                                   (0, 0),
-                                   (0, 0),
-                                   (0, 0),
-                                   (0, 0)]
+            self.collide_points = [(self.center[0] + w / 3.3, self.center[1] - h/7),
+                                   (self.center[0] + w / 10, self.center[1] - h/4),
+                                   (self.center[0] + w/20, self.center[1] + h/2.7),
+                                   (self.center[0] - w/8, self.center[1] + h/2.7),
+                                   (self.center[0] - w/3.5, self.center[1] + h/6)]
 
     def draw(self):
         self.update_collide_points()
