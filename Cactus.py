@@ -43,10 +43,13 @@ class Cactus(Entity):
                 return True
         return False
 
-
-    def draw_dev(self):
+    def draw(self):
         self.update_bounds()
         self.screen.blit(self.ready_image, self.position)
+
+    def draw_dev(self):
+        self.draw()
+
         for rec in self.bounds:
             s = pygame.Surface((rec.width, rec.height), pygame.SRCALPHA)
             s.fill((255, 0, 0, 128))
@@ -63,12 +66,12 @@ class Cactus_group:
         self.cactus_array = []
         for i in range(self.count):
             self.cactus_array.append(Cactus(screen, folder_name, position, width))
-            self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1]))
+            self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1] - self.cactus_array[i].ready_image.get_height()))
 
     def set_position(self, position=(0, 0)):
         self.position = position
         for i in range(self.count):
-            self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1]))
+            self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1] - self.cactus_array[i].ready_image.get_height()))
 
     def draw(self):
         for i in range(self.count):
@@ -77,3 +80,42 @@ class Cactus_group:
     def draw_dev(self):
         for i in range(self.count):
             self.cactus_array[i].draw_dev()
+
+
+class SpawnSystem:
+    def __init__(self, screen: pygame.Surface, ground_height):
+        self.screen = screen
+        self.ground_height = ground_height
+        self.groups = []
+        self.spawn_cactus()
+
+    def run(self, current_speed, dt):
+        for i in range(len(self.groups)):
+            if not (self.groups[i].position[0] < -self.screen.get_width()/4):
+                self.groups[i].set_position((self.groups[i].position[0] - current_speed * dt, self.groups[i].position[1]))
+            else:
+                del self.groups[i]
+                print(self.groups)
+                self.spawn_cactus()
+
+
+    def spawn_cactus(self):
+        self.groups.append(Cactus_group(self.screen, 'cactus',
+                    (self.screen.get_width() / 2, self.ground_height),
+                    width=(self.screen.get_width() // 10)))
+
+    def show_cactuses(self, dev_version):
+        if dev_version:
+            for cactus in self.groups:
+                cactus.draw_dev()
+        else:
+            for cactus in self.groups:
+                cactus.draw()
+
+    def detect_collision(self, dino):
+        for group in self.groups:
+            for i in (range(len(group.cactus_array))):
+                for p in dino.collide_points:
+                    if group.cactus_array[i].collide_with_point(p):
+                        return True
+        return False

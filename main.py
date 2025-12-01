@@ -19,8 +19,7 @@ info = pygame.display.Info()
 color = WHITE
 font = pygame.font.Font(None, screen.get_height() // 20)
 
-cactus_2: Cactus
-cactus: Cactus_group
+spawn_cactus_system: SpawnSystem
 dino: Dino
 ground: Ground
 
@@ -51,6 +50,9 @@ game_time = 0
 score = 0.0
 max_score = 0
 
+
+
+
 button_resize = Button(screen, screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
                        screen.get_width() / 20, "MI")
 
@@ -62,7 +64,9 @@ def spawn_all_entitys():
     global ground
     global cactus
     global screen
+    global spawn_cactus_system
 
+    spawn_cactus_system = SpawnSystem(screen, ground_height)
     dino = Dino(screen, 'dino',
                   (0, ground_height),
                   screen.get_width() // 10)
@@ -70,12 +74,11 @@ def spawn_all_entitys():
     ground = Ground(screen, 'road',
                     (0, ground_height),
                     screen.get_width())
-    cactus = Cactus_group(screen, 'cactus',
-                    (screen.get_width() / 2, screen.get_height() / 2),
-                    width=(screen.get_width() // 10))
 
     dino_start_position_y = dino.position[1]
     jump_height = screen.get_height() / 3
+
+
 
 
 
@@ -106,12 +109,11 @@ def draw_game(keys):
     if on_ground:
         play_walking_anim()
     ground.draw()
+    spawn_cactus_system.show_cactuses(dev_version)
     if not dev_version:
         dino.draw()
-        cactus.draw()
     else:
         dino.draw_dev()
-        cactus.draw_dev()
 
 
 def play_walking_anim():
@@ -150,7 +152,7 @@ def game(dt, keys):
 
     if not (game_time < 1) and (dino_seat == 0):
         ground.run(current_speed * dt)
-        cactus.set_position((cactus.position[0] - current_speed * dt, cactus.position[1]))
+        spawn_cactus_system.run(current_speed, dt)
         update_score()
 
     if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
@@ -164,7 +166,7 @@ def game(dt, keys):
     dino_seat = 1 if keys[pygame.K_LEFT] else 0
     dino_state = 2 if keys[pygame.K_DOWN] else 0
 
-    if detect_collision():
+    if spawn_cactus_system.detect_collision(dino):
         reset_game()
         current_state = GameState.GAME_OVER
 
@@ -196,17 +198,6 @@ def jump(dt):
         jump_time = 0
         jump_duration = 0
         on_ground = True
-
-
-def detect_collision():
-    global dino
-    global cactus
-
-    for i in (range(len(cactus.cactus_array))):
-        for p in dino.collide_points:
-            if cactus.cactus_array[i].collide_with_point(p):
-                return True
-    return False
 
 
 def resize():
