@@ -7,12 +7,10 @@ class Cactus(Entity):
     def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64):
         super().__init__(screen, folder_name, position, width)
         self.image_n = random.randint(0, 2)
-        # self.image_n = 0
         self.set_image(self.image_n)
         self.bounds = [EMPTY_RECT] * 2
         if self.image_n > 0:
             self.bounds = [EMPTY_RECT] * 3
-
         self.update_bounds()
 
     def update_bounds(self):
@@ -55,23 +53,23 @@ class Cactus(Entity):
             s.fill((255, 0, 0, 128))
             self.screen.blit(s, rec.topleft)
 
-    def scale(self):
-        pass
+    def get_right(self):
+        return self.bounds[1].topright[0]
 
 
 class Cactus_group:
-    def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64, min_scale=0.5, max_scale=1):
+    def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64):
         self.count = random.randint(1, 3)
         self.position = position
         self.cactus_array = []
         for i in range(self.count):
-            self.cactus_array.append(Cactus(screen, folder_name, position, width))
+            self.cactus_array.append(Cactus(screen, folder_name, position, int(width*(random.randint(9, 11)/10))))
             self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1] - self.cactus_array[i].ready_image.get_height()))
 
     def set_position(self, position=(0.0, 0.0)):
         self.position = position
         for i in range(self.count):
-            self.cactus_array[i].set_position((float(self.position[0] + i * self.cactus_array[i].ready_image.get_width()*0.45), self.position[1] - self.cactus_array[i].ready_image.get_height()))
+            self.cactus_array[i].set_position((float(self.position[0] + i * self.cactus_array[i-1].ready_image.get_width()*0.5), self.position[1] - self.cactus_array[i].ready_image.get_height()))
 
     def draw(self):
         for i in range(self.count):
@@ -80,6 +78,9 @@ class Cactus_group:
     def draw_dev(self):
         for i in range(self.count):
             self.cactus_array[i].draw_dev()
+
+    def get_right(self):
+        return self.cactus_array[self.count-1].get_right()
 
 
 class SpawnSystem:
@@ -92,26 +93,25 @@ class SpawnSystem:
         self.ground_height = ground_height
         self.groups = []
         self.spawn_cactus()
+        self.spawn_cactus(self.dist)
 
     def run(self, current_speed):
         for i in range(len(self.groups)):
-            if not (self.groups[i].position[0] < -self.screen.get_width()/4):
+            if not (self.groups[i].get_right() < 0):
                 self.groups[i].set_position((self.groups[i].position[0] - current_speed, self.groups[i].position[1]))
             else:
                 self.groups.pop(i)
-                print(self.groups)
-                self.spawn_cactus()
+                self.spawn_cactus(self.dist)
+                self.update_distance(current_speed)
 
-        if self.groups[-1].position[0] < self.dist:
-            self.spawn_cactus()
-            self.update_distance(current_speed)
+
 
     def update_distance(self, cur_speed):
-        self.dist = self.screen.get_width()*0.7 + random.randint(int(-self.screen.get_width()*0.5), 0) - cur_speed
+        self.dist = self.screen.get_width()/2 + random.randint(0 , int(self.screen.get_width()/3)) + cur_speed
 
-    def spawn_cactus(self):
+    def spawn_cactus(self, x_offset=0.0):
         self.groups.append(Cactus_group(self.screen, 'cactus',
-                    (self.screen.get_width(), self.ground_height),
+                    (self.screen.get_width() + x_offset, self.ground_height),
                     width=self.width))
 
     def draw(self, dev_version):

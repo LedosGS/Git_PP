@@ -36,6 +36,7 @@ dino_state = 0
 dino_seat = 0
 last_update = pygame.time.get_ticks()
 anim_speed = 100
+dino_image = pygame.image.load(f'{SRC_IMAGES}dino/dino_0.png')
 
 jump_height = screen.get_height() / 3
 on_ground = True
@@ -57,11 +58,11 @@ max_score = 0
 dino_deth_position = (0, 0)
 
 button_resize = Button(screen, screen.get_height() / 10, screen.get_height() / 10, screen.get_height() / 20,
-                       screen.get_height() / 20, "MI")
+                       screen.get_height() / 20, "MI", font)
 
-button_to_game = Button(start_screen, start_screen.get_width()/10, start_screen.get_height()*0.3, start_screen.get_width() * 0.8, start_screen.get_height()/10, "to game")
+button_to_game = Button(start_screen, start_screen.get_width()/10, start_screen.get_height()*0.3, start_screen.get_width() * 0.8, start_screen.get_height()/10, "to game", big_font)
 
-button_dev = Button(start_screen, start_screen.get_width()/10, start_screen.get_height() * 0.5, start_screen.get_width() * 0.8, start_screen.get_height()/10, "relize")
+button_dev = Button(start_screen, start_screen.get_width()/10, start_screen.get_height() * 0.5, start_screen.get_width() * 0.8, start_screen.get_height()/10, "relize", big_font)
 
 def spawn_all_entitys():
     global dino
@@ -91,12 +92,13 @@ def spawn_all_entitys():
                     screen.get_width())
 
     dino_start_position_y = dino.position[1]
-    jump_height = screen.get_width() / 7
+    jump_height = screen.get_width() / 8
     base_speed = screen.get_width() / 4
     max_speed = screen.get_width()
     acceleration_rate = screen.get_width() / 35
 
 def draw_start_menu():
+    start_screen.blit(dino_image, (start_screen.get_width()/2 - dino_image.get_width()/2, start_screen.get_height()*0.7 ))
     game_over_text = big_font.render(f'Chrome Dino', True, BLACK)
     start_screen.blit(game_over_text, (start_screen.get_width() / 2 - game_over_text.get_width() / 2, start_screen.get_height() / 10))
     button_to_game.draw(start_screen)
@@ -111,7 +113,7 @@ def draw_menu():
     screen_text = font.render("screen mode", True, BLACK)
     screen.blit(menu_text, (screen.get_width() / 2, screen.get_height() / 10))
     screen.blit(menu_text_2, (screen.get_width() / 2, screen.get_height() / 5))
-    screen.blit(screen_text, (screen.get_width() / 20, screen.get_height() / 20))
+    screen.blit(screen_text, (screen.get_height() / 7, screen.get_height() / 14))
     button_resize.draw(screen)
 
 
@@ -123,24 +125,25 @@ def draw_game_over():
     dino.set_position(dino_deth_position)
     dino.set_image(5)
     clouds.draw()
+    dino.draw()
     spawn_cactus_system.draw(dev_version)
     ground.draw()
-    dino.draw()
 
 def draw_game(keys):
     global max_score
-    nepriyatno_text = font.render("Стоп! Мне не приятно!", True, BLACK)
+    nepriyatno_text = font.render("Стоп! Я устал!", True, BLACK)
     game_text = big_font.render("GAME", True, BLACK)
-    score_text = font.render(f'HI: {int(max_score)}  score: {int(score)}', True, BLACK)
+    score_text = font.render(f'HI: {int(max_score)}  score: {int(score)}    ', True, BLACK)
 
     if keys[pygame.K_LEFT]:
         screen.blit(nepriyatno_text, (screen.get_width() / 10, screen.get_height() * 0.6))
 
-    screen.blit(score_text, (screen.get_width() * 0.8, screen.get_height() / 10))
+    screen.blit(score_text, (screen.get_width()-score_text.get_width(), screen.get_height() / 10))
     screen.blit(game_text, (screen.get_width() / 2 - game_text.get_width() / 2, screen.get_height() / 10))
     if on_ground:
         play_walking_anim()
     ground.draw()
+
     spawn_cactus_system.draw(dev_version)
     if not dev_version:
         clouds.draw()
@@ -256,22 +259,34 @@ def dev_choose():
         button_dev.text = "relize"
         dev_version = False
 
+def update_button_resize(text):
+    global button_resize
+    button_resize = Button(screen, screen.get_height() / 7, screen.get_height() / 7, screen.get_height() / 10,
+                           screen.get_height() / 10, text, font)
+
 def resize():
-    global dino, screen, ground_height, font, button_resize
+    global dino
+    global screen
+    global ground_height
+    global font
+    global button_resize
+    global big_font
+
     if button_resize.text == "MI":
-        button_resize.text = "MA"
         screen = pygame.display.set_mode(Resolutions.MIN)
         ground_height = screen.get_height() * 0.85
-        font = pygame.font.Font(None, screen.get_width() // 20)
-
+        font = pygame.font.Font(None, screen.get_height() // 15)
+        big_font = pygame.font.Font(None, screen.get_height() // 10)
         spawn_all_entitys()
+        update_button_resize("MA")
 
     elif button_resize.text == "MA":
-        button_resize.text = "MI"
         screen = pygame.display.set_mode(Resolutions.MAX)
         ground_height = screen.get_height() * 0.85
-        font = pygame.font.Font(None, screen.get_width() // 20)
+        font = pygame.font.Font(None, screen.get_height() // 15)
+        big_font = pygame.font.Font(None, screen.get_height() // 10)
         spawn_all_entitys()
+        update_button_resize("MI")
 
 
 def update_score():

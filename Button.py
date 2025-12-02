@@ -3,14 +3,14 @@ from constants import *
 
 
 class Button:
-    def __init__(self, screen: pygame.Surface, x, y, width, height, text, color=GRAY, hover_color=DARK_GRAY):
+    def __init__(self, screen: pygame.Surface, x, y, width, height, text, font_s, color=GRAY, hover_color=DARK_GRAY):
         self.screen = screen
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.color = color
         self.hover_color = hover_color
         self.current_color = color
-        self.font = pygame.font.Font(None, 36)
+        self.font = font_s
 
     def draw(self, surface):
         pygame.draw.rect(surface, self.current_color, self.rect)

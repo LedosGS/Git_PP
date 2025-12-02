@@ -20,4 +20,4 @@ class GameState:
 
 class Resolutions:
     MIN = (1000, 250)
-    MAX = (1600, 400)
+    MAX = (1200, 300)
