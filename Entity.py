@@ -4,7 +4,7 @@ from constants import *
 
 
 class Entity:
-    def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64):
+    def __init__(self, screen: pygame.Surface, folder_name, position=(0.0, 0.0), width=64):
         self.screen = screen
 
         self.condition_aray = {}
@@ -47,7 +47,7 @@ class Entity:
         pygame.draw.circle(self.screen, RED, self.position, 5)
 
     def draw(self):
-        self.screen.blit(self.ready_image, self.position)
+        self.screen.blit(self.ready_image, (round(self.position[0]), round(self.position[1])))
 
     def set_image(self, num):
         try:
@@ -66,3 +66,9 @@ class Entity:
 
     def get_w(self):
         return self.ready_image.get_width()
+
+    def move_x(self, x_offset):
+        self.position = (self.position[0] + x_offset, self.position[1])
+
+    def move_y(self, y_offset):
+        self.position = (self.position[0], self.position[1] + y_offset)

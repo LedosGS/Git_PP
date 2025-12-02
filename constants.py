@@ -15,8 +15,9 @@ class GameState:
     MENU = 0
     GAME = 1
     GAME_OVER = 2
+    START_SCREEN = 3
 
 
 class Resolutions:
-    MIN = (1000, 500)
-    MAX = (1500, 750)
+    MIN = (1000, 250)
+    MAX = (1600, 400)

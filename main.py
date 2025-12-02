@@ -9,21 +9,25 @@ from Dino import *
 from Button import *
 from Ground import *
 from Cactus import *
+from Clouds import *
 
 dev_version = False
 pygame.init()
 screen = pygame.display.set_mode(Resolutions.MAX, pygame.SRCALPHA, pygame.DOUBLEBUF | pygame.HWSURFACE)
+start_screen = pygame.display.set_mode((200, 400), pygame.SRCALPHA, pygame.DOUBLEBUF | pygame.HWSURFACE)
 pygame.display.set_caption("Dino")
 clock = pygame.time.Clock()
 info = pygame.display.Info()
 color = WHITE
 font = pygame.font.Font(None, screen.get_height() // 20)
+big_font = pygame.font.Font(None, screen.get_height() // 10)
 
 spawn_cactus_system: SpawnSystem
 dino: Dino
 ground: Ground
+clouds: Cloud
 
-current_state = GameState.MENU
+current_state = GameState.START_SCREEN
 ground_height = screen.get_height() * 0.85
 last_time = pygame.time.get_ticks()
 
@@ -42,20 +46,22 @@ jump_time = 0
 jump_force = 1.0
 
 FPS_limit = 75
-base_speed = 400
+base_speed = screen.get_width() / 4
 current_speed = base_speed
-max_speed = 2400
-acceleration_rate = 12  # пикселей/секунду²
+max_speed = screen.get_width()
+acceleration_rate = screen.get_width() / 20
 game_time = 0
 score = 0.0
 max_score = 0
 
+dino_deth_position = (0, 0)
 
+button_resize = Button(screen, screen.get_height() / 10, screen.get_height() / 10, screen.get_height() / 20,
+                       screen.get_height() / 20, "MI")
 
+button_to_game = Button(start_screen, start_screen.get_width()/10, start_screen.get_height()*0.3, start_screen.get_width() * 0.8, start_screen.get_height()/10, "to game")
 
-button_resize = Button(screen, screen.get_width() / 20, screen.get_width() / 20, screen.get_width() / 20,
-                       screen.get_width() / 20, "MI")
-
+button_dev = Button(start_screen, start_screen.get_width()/10, start_screen.get_height() * 0.5, start_screen.get_width() * 0.8, start_screen.get_height()/10, "relize")
 
 def spawn_all_entitys():
     global dino
@@ -65,28 +71,42 @@ def spawn_all_entitys():
     global cactus
     global screen
     global spawn_cactus_system
+    global base_speed
+    global max_speed
+    global acceleration_rate
+    global button_resize
+    global clouds
 
-    spawn_cactus_system = SpawnSystem(screen, ground_height)
+    spawn_cactus_system = SpawnSystem(screen, ground_height, (0, 0), screen.get_height() / 3)
+    clouds = Cloud(screen, 'cloud',
+                   (screen.get_width() / 2, screen.get_height() / 2),
+                   screen.get_width() // 10)
+
     dino = Dino(screen, 'dino',
-                  (0, ground_height),
-                  screen.get_width() // 10)
+                (0, ground_height),
+                screen.get_width() // 10)
 
     ground = Ground(screen, 'road',
                     (0, ground_height),
                     screen.get_width())
 
     dino_start_position_y = dino.position[1]
-    jump_height = screen.get_height() / 3
+    jump_height = screen.get_width() / 7
+    base_speed = screen.get_width() / 4
+    max_speed = screen.get_width()
+    acceleration_rate = screen.get_width() / 35
 
-
-
-
+def draw_start_menu():
+    game_over_text = big_font.render(f'Chrome Dino', True, BLACK)
+    start_screen.blit(game_over_text, (start_screen.get_width() / 2 - game_over_text.get_width() / 2, start_screen.get_height() / 10))
+    button_to_game.draw(start_screen)
+    button_dev.draw(start_screen)
 
 
 def draw_menu():
     ground.draw()
     dino.draw()
-    menu_text = font.render("Main Menu", True, BLACK)
+    menu_text = big_font.render("Main Menu", True, BLACK)
     menu_text_2 = font.render("press space, Arrow Up or Down", True, BLACK)
     screen_text = font.render("screen mode", True, BLACK)
     screen.blit(menu_text, (screen.get_width() / 2, screen.get_height() / 10))
@@ -95,24 +115,38 @@ def draw_menu():
     button_resize.draw(screen)
 
 
-def draw_game(keys):
-    nepriyatno_text = font.render("Стоп! Мне не приятно!", True, BLACK)
-    game_text = font.render("Game", True, BLACK)
+def draw_game_over():
     score_text = font.render(f'HI: {int(max_score)}  score: {int(score)}', True, BLACK)
-    game_txt_rect = game_text.get_rect()
+    game_over_text = big_font.render(f'GAME OVER', True, BLACK)
+    screen.blit(game_over_text, (screen.get_width()/2 - game_over_text.get_width()/2, screen.get_height() / 10))
+    screen.blit(score_text, (screen.get_width() * 0.8, screen.get_height() / 10))
+    dino.set_position(dino_deth_position)
+    dino.set_image(5)
+    clouds.draw()
+    spawn_cactus_system.draw(dev_version)
+    ground.draw()
+    dino.draw()
+
+def draw_game(keys):
+    global max_score
+    nepriyatno_text = font.render("Стоп! Мне не приятно!", True, BLACK)
+    game_text = big_font.render("GAME", True, BLACK)
+    score_text = font.render(f'HI: {int(max_score)}  score: {int(score)}', True, BLACK)
 
     if keys[pygame.K_LEFT]:
         screen.blit(nepriyatno_text, (screen.get_width() / 10, screen.get_height() * 0.6))
 
     screen.blit(score_text, (screen.get_width() * 0.8, screen.get_height() / 10))
-    screen.blit(game_text, (screen.get_width() / 2 - game_txt_rect.width // 2, screen.get_height() / 10))
+    screen.blit(game_text, (screen.get_width() / 2 - game_text.get_width() / 2, screen.get_height() / 10))
     if on_ground:
         play_walking_anim()
     ground.draw()
-    spawn_cactus_system.show_cactuses(dev_version)
+    spawn_cactus_system.draw(dev_version)
     if not dev_version:
+        clouds.draw()
         dino.draw()
     else:
+        clouds.draw()
         dino.draw_dev()
 
 
@@ -132,6 +166,7 @@ def play_walking_anim():
             dino.set_image(12)
         last_update = now
 
+
 def reset_game():
     global on_ground
     global jump_time
@@ -143,16 +178,18 @@ def reset_game():
 
     reset_speed()
 
+
 def game(dt, keys):
     global current_state
     global game_time
     global dino_state
     global dino_seat
     global on_ground
+    global dino_deth_position
 
     if not (game_time < 1) and (dino_seat == 0):
         ground.run(current_speed * dt)
-        spawn_cactus_system.run(current_speed, dt)
+        spawn_cactus_system.run(current_speed * dt)
         update_score()
 
     if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
@@ -167,9 +204,12 @@ def game(dt, keys):
     dino_state = 2 if keys[pygame.K_DOWN] else 0
 
     if spawn_cactus_system.detect_collision(dino):
+        dino_deth_position = dino.position
         reset_game()
         current_state = GameState.GAME_OVER
+        save_result()
 
+    clouds.run(current_speed * dt)
     update_speed(dt)
 
 
@@ -199,6 +239,22 @@ def jump(dt):
         jump_duration = 0
         on_ground = True
 
+def to_game():
+    global current_state
+    global screen
+    current_state = GameState.MENU
+    screen = pygame.display.set_mode(Resolutions.MAX, pygame.SRCALPHA, pygame.DOUBLEBUF | pygame.HWSURFACE)
+    resize()
+
+def dev_choose():
+    global button_dev
+    global dev_version
+    if button_dev.text == "relize":
+        button_dev.text = "dev"
+        dev_version = True
+    else:
+        button_dev.text = "relize"
+        dev_version = False
 
 def resize():
     global dino, screen, ground_height, font, button_resize
@@ -206,7 +262,7 @@ def resize():
         button_resize.text = "MA"
         screen = pygame.display.set_mode(Resolutions.MIN)
         ground_height = screen.get_height() * 0.85
-        font = pygame.font.Font(None, screen.get_height() // 20)
+        font = pygame.font.Font(None, screen.get_width() // 20)
 
         spawn_all_entitys()
 
@@ -214,7 +270,7 @@ def resize():
         button_resize.text = "MI"
         screen = pygame.display.set_mode(Resolutions.MAX)
         ground_height = screen.get_height() * 0.85
-        font = pygame.font.Font(None, screen.get_height() // 20)
+        font = pygame.font.Font(None, screen.get_width() // 20)
         spawn_all_entitys()
 
 
@@ -227,7 +283,7 @@ def update_speed(dt):
     global current_speed, game_time
     game_time += dt
     if current_speed < max_speed:
-        current_speed = min(max_speed, base_speed + acceleration_rate * game_time)
+        current_speed = min(float(max_speed), (base_speed + acceleration_rate * game_time))
 
 
 def reset_speed():
@@ -236,8 +292,10 @@ def reset_speed():
     current_speed = base_speed
     game_time = 0
 
+
 def main(args):
     global current_state, dino_state, dino_step, dino_seat, last_time, dev_version
+    global score
 
     if len(args) != 1:
         dev_version = True
@@ -247,6 +305,7 @@ def main(args):
     spawn_all_entitys()
     running = True
     dino.set_image(1)
+
     while running:
         keys = pygame.key.get_pressed()
         current_time = pygame.time.get_ticks()
@@ -255,9 +314,9 @@ def main(args):
         dt = min(dt, 1.0 / FPS_limit * 2)
 
         mouse_pos = pygame.mouse.get_pos()
-        screen.fill(color)
 
         if current_state == GameState.MENU:
+            screen.fill(color)
             draw_menu()
             button_resize.is_hovered(mouse_pos)
 
@@ -274,6 +333,7 @@ def main(args):
                         current_state = GameState.GAME
 
         elif current_state == GameState.GAME:
+            screen.fill(color)
 
             draw_game(keys)
             game(dt, keys)
@@ -285,22 +345,55 @@ def main(args):
                     if event.key == pygame.K_ESCAPE:
                         running = False
 
-
         elif current_state == GameState.GAME_OVER:
+            screen.fill(color)
+            draw_game_over()
             for event in pygame.event.get():
-
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
                     if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                        score = 0
                         spawn_all_entitys()
                         current_state = GameState.MENU
+
+        elif current_state == GameState.START_SCREEN:
+            start_screen.fill(color)
+            draw_start_menu()
+            button_to_game.is_hovered(mouse_pos)
+            button_dev.is_hovered(mouse_pos)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif button_dev.is_clicked(mouse_pos, event):
+                    dev_choose()
+                elif button_to_game.is_clicked(mouse_pos, event):
+                    to_game()
 
         pygame.display.flip()
         clock.tick(FPS_limit)
 
 
+def save_result():
+    global max_score
+    try:
+        with open("./src/result.txt", 'w') as f:
+            f.write(str(max_score))
+    except Exception as E:
+        print(f'ошибка открывания файла: {E}')
+
+
+def load_result():
+    global max_score
+    try:
+        with open("./src/result.txt", 'r') as f:
+            max_score = float(f.read())
+    except Exception as E:
+        print(f'ошибка открывания файла: {E}')
+
 if __name__ == '__main__':
+    load_result()
     main(sys.argv)

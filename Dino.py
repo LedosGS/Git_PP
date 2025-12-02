@@ -5,7 +5,7 @@ from constants import *
 
 class Dino(Entity):
 
-    def __init__(self, screen: pygame.Surface, folder_name, position=(0, 0), width=64):
+    def __init__(self, screen: pygame.Surface, folder_name, position=(0.0, 0.0), width=64):
         super().__init__(screen, folder_name, position, width)
         self.image_n = 0
         self.collide_points = []

@@ -68,10 +68,10 @@ class Cactus_group:
             self.cactus_array.append(Cactus(screen, folder_name, position, width))
             self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1] - self.cactus_array[i].ready_image.get_height()))
 
-    def set_position(self, position=(0, 0)):
+    def set_position(self, position=(0.0, 0.0)):
         self.position = position
         for i in range(self.count):
-            self.cactus_array[i].set_position((self.position[0] + i * 100, self.position[1] - self.cactus_array[i].ready_image.get_height()))
+            self.cactus_array[i].set_position((float(self.position[0] + i * self.cactus_array[i].ready_image.get_width()*0.45), self.position[1] - self.cactus_array[i].ready_image.get_height()))
 
     def draw(self):
         for i in range(self.count):
@@ -83,28 +83,38 @@ class Cactus_group:
 
 
 class SpawnSystem:
-    def __init__(self, screen: pygame.Surface, ground_height):
+    def __init__(self, screen: pygame.Surface, ground_height, position, width):
+        self.position = position
+        self.width = width
         self.screen = screen
+        self.dist = 0.0
+        self.update_distance(0)
         self.ground_height = ground_height
         self.groups = []
         self.spawn_cactus()
 
-    def run(self, current_speed, dt):
+    def run(self, current_speed):
         for i in range(len(self.groups)):
             if not (self.groups[i].position[0] < -self.screen.get_width()/4):
-                self.groups[i].set_position((self.groups[i].position[0] - current_speed * dt, self.groups[i].position[1]))
+                self.groups[i].set_position((self.groups[i].position[0] - current_speed, self.groups[i].position[1]))
             else:
-                del self.groups[i]
+                self.groups.pop(i)
                 print(self.groups)
                 self.spawn_cactus()
 
+        if self.groups[-1].position[0] < self.dist:
+            self.spawn_cactus()
+            self.update_distance(current_speed)
+
+    def update_distance(self, cur_speed):
+        self.dist = self.screen.get_width()*0.7 + random.randint(int(-self.screen.get_width()*0.5), 0) - cur_speed
 
     def spawn_cactus(self):
         self.groups.append(Cactus_group(self.screen, 'cactus',
-                    (self.screen.get_width() / 2, self.ground_height),
-                    width=(self.screen.get_width() // 10)))
+                    (self.screen.get_width(), self.ground_height),
+                    width=self.width))
 
-    def show_cactuses(self, dev_version):
+    def draw(self, dev_version):
         if dev_version:
             for cactus in self.groups:
                 cactus.draw_dev()
