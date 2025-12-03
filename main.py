@@ -37,6 +37,8 @@ dino_seat = 0
 last_update = pygame.time.get_ticks()
 anim_speed = 100
 dino_image = pygame.image.load(f'{SRC_IMAGES}dino/dino_0.png')
+dino_image_2 = pygame.image.load(f'{SRC_IMAGES}dino/dino_5.png')
+
 
 jump_height = screen.get_height() / 3
 on_ground = True
@@ -45,6 +47,7 @@ dino_start_position_y = 0
 jump_duration = 0
 jump_time = 0
 jump_force = 1.0
+difficult_multiply = 1
 
 FPS_limit = 75
 base_speed = screen.get_width() / 4
@@ -60,10 +63,11 @@ dino_deth_position = (0, 0)
 button_resize = Button(screen, screen.get_height() / 10, screen.get_height() / 10, screen.get_height() / 20,
                        screen.get_height() / 20, "MI", font)
 
-button_to_game = Button(start_screen, start_screen.get_width()/10, start_screen.get_height()*0.3, start_screen.get_width() * 0.8, start_screen.get_height()/10, "to game", big_font)
+button_to_game = Button(start_screen, start_screen.get_width()/10, start_screen.get_height()*0.25, start_screen.get_width() * 0.8, start_screen.get_height()/10, "to game", big_font)
 
-button_dev = Button(start_screen, start_screen.get_width()/10, start_screen.get_height() * 0.5, start_screen.get_width() * 0.8, start_screen.get_height()/10, "relize", big_font)
+button_dev = Button(start_screen, start_screen.get_width()/10, start_screen.get_height() * 0.45, start_screen.get_width() * 0.8, start_screen.get_height()/10, "relize", big_font)
 
+button_difficult = Button(start_screen, start_screen.get_width()/10, start_screen.get_height() * 0.65, start_screen.get_width() * 0.8, start_screen.get_height()/10, "easy", big_font)
 def spawn_all_entitys():
     global dino
     global dino_start_position_y
@@ -93,16 +97,21 @@ def spawn_all_entitys():
 
     dino_start_position_y = dino.position[1]
     jump_height = screen.get_width() / 8
-    base_speed = screen.get_width() / 4
-    max_speed = screen.get_width()
-    acceleration_rate = screen.get_width() / 35
+    base_speed = screen.get_width() / 4 * difficult_multiply
+    max_speed = screen.get_width() * difficult_multiply
+    acceleration_rate = screen.get_width() / 35 * difficult_multiply
 
 def draw_start_menu():
-    start_screen.blit(dino_image, (start_screen.get_width()/2 - dino_image.get_width()/2, start_screen.get_height()*0.7 ))
+    if difficult_multiply == 1:
+        start_screen.blit(dino_image, (start_screen.get_width()/2 - dino_image.get_width()/2, start_screen.get_height()*0.8 ))
+    else:
+        start_screen.blit(dino_image_2, (start_screen.get_width() / 2 - dino_image.get_width() / 2, start_screen.get_height() * 0.8))
+
     game_over_text = big_font.render(f'Chrome Dino', True, BLACK)
     start_screen.blit(game_over_text, (start_screen.get_width() / 2 - game_over_text.get_width() / 2, start_screen.get_height() / 10))
     button_to_game.draw(start_screen)
     button_dev.draw(start_screen)
+    button_difficult.draw(start_screen)
 
 
 def draw_menu():
@@ -210,7 +219,7 @@ def game(dt, keys):
         dino_deth_position = dino.position
         reset_game()
         current_state = GameState.GAME_OVER
-        save_result()
+        save_result(difficult_multiply)
 
     clouds.run(current_speed * dt)
     update_speed(dt)
@@ -227,7 +236,7 @@ def jump(dt):
     jump_time += dt
 
     if jump_duration == 0:
-        jump_duration = 0.7
+        jump_duration = 0.65 / difficult_multiply
 
     progress = jump_time / jump_duration
 
@@ -248,6 +257,16 @@ def to_game():
     current_state = GameState.MENU
     screen = pygame.display.set_mode(Resolutions.MAX, pygame.SRCALPHA, pygame.DOUBLEBUF | pygame.HWSURFACE)
     resize()
+
+def change_difficult():
+    global difficult_multiply
+    global button_difficult
+    if button_difficult.text == "easy":
+        button_difficult.text = "hard"
+        difficult_multiply = 2
+    else:
+        button_difficult.text = "easy"
+        difficult_multiply = 1
 
 def dev_choose():
     global button_dev
@@ -331,6 +350,7 @@ def main(args):
         mouse_pos = pygame.mouse.get_pos()
 
         if current_state == GameState.MENU:
+            load_result(difficult_multiply)
             screen.fill(color)
             draw_menu()
             button_resize.is_hovered(mouse_pos)
@@ -379,6 +399,7 @@ def main(args):
             draw_start_menu()
             button_to_game.is_hovered(mouse_pos)
             button_dev.is_hovered(mouse_pos)
+            button_difficult.is_hovered(mouse_pos)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -387,28 +408,43 @@ def main(args):
                     dev_choose()
                 elif button_to_game.is_clicked(mouse_pos, event):
                     to_game()
+                elif button_difficult.is_clicked(mouse_pos, event):
+                    change_difficult()
 
         pygame.display.flip()
         clock.tick(FPS_limit)
 
 
-def save_result():
+def save_result(difficult_multiply):
     global max_score
-    try:
-        with open("./src/result.txt", 'w') as f:
-            f.write(str(max_score))
-    except Exception as E:
-        print(f'ошибка открывания файла: {E}')
+    if difficult_multiply == 1:
+        try:
+            with open("./src/result.txt", 'w') as f:
+                f.write(str(max_score))
+        except Exception as E:
+            print(f'ошибка открывания файла: {E}')
+    else:
+        try:
+            with open("./src/result_hard.txt", 'w') as f:
+                f.write(str(max_score))
+        except Exception as E:
+            print(f'ошибка открывания файла: {E}')
 
 
-def load_result():
+def load_result(difficult_multiply):
     global max_score
-    try:
-        with open("./src/result.txt", 'r') as f:
-            max_score = float(f.read())
-    except Exception as E:
-        print(f'ошибка открывания файла: {E}')
+    if difficult_multiply == 1:
+        try:
+            with open("./src/result.txt", 'r') as f:
+                max_score = float(f.read())
+        except Exception as E:
+            print(f'ошибка открывания файла: {E}')
+    else:
+        try:
+            with open("./src/result_hard.txt", 'r') as f:
+                max_score = float(f.read())
+        except Exception as E:
+            print(f'ошибка открывания файла: {E}')
 
 if __name__ == '__main__':
-    load_result()
     main(sys.argv)
