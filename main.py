@@ -134,8 +134,8 @@ def draw_game_over():
     dino.set_position(dino_deth_position)
     dino.set_image(5)
     clouds.draw()
-    dino.draw()
     spawn_cactus_system.draw(dev_version)
+    dino.draw()
     ground.draw()
 
 def draw_game(keys):
@@ -338,7 +338,6 @@ def main(args):
 
     spawn_all_entitys()
     running = True
-    dino.set_image(1)
 
     while running:
         keys = pygame.key.get_pressed()
@@ -354,6 +353,7 @@ def main(args):
             screen.fill(color)
             draw_menu()
             button_resize.is_hovered(mouse_pos)
+            dino.set_image(12)
 
             for event in pygame.event.get():
 
